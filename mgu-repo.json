@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "cebep-map-zone",
+      "kind": "tool",
+      "path": "tools/cebep-map-zone",
+      "title": "Yandex on cluster: map zone (CEBEP SPB)",
+      "mguHmi": ["ID7"],
+      "uninstallable": true,
+      "requires": { "mgu-deploy": "0.8.0", "waze-on-cluster": "0.11.0" }
+    }
+  ]
+}

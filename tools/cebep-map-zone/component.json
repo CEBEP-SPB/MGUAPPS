@@ -1,0 +1,22 @@
+{
+  "id": "cebep-map-zone",
+  "kind": "tool",
+  "version": "0.1.0",
+  "license": "GPL-3.0-or-later",
+  "title": "Yandex on cluster: map zone (CEBEP SPB)",
+  "description": "Moves the CarPlay cluster-map safe area so Yandex Navigator puts the car in the middle of the instrument cluster. For Maps on cluster (waze-on-cluster) 0.11.0 and newer, where CarPlay is patched in memory: it only asks Maps on cluster's own plan generator to make its plan again with another safe area. Nothing is written to the system partition, nothing runs at boot. Takes effect at the next head-unit start. Removing it puts the default safe area back. The safe area is one for every CarPlay app, so the offset that suits Yandex may misplace Apple Maps or Waze.",
+  "requires": {
+    "mgu-deploy": "0.8.0",
+    "waze-on-cluster": "0.11.0"
+  },
+  "uninstallable": true,
+  "mguHmi": ["ID7"],
+  "activate": ["node", "zone.js", "activate"],
+  "deactivate": ["node", "zone.js", "deactivate"],
+  "files": [
+    { "path": "zone.js", "mode": "0644" },
+    { "path": "zone.conf", "mode": "0644" },
+    { "path": "README.md", "mode": "0644" },
+    { "path": "LICENSE", "mode": "0644" }
+  ]
+}
