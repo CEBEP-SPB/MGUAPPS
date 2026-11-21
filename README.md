@@ -1,42 +1,43 @@
-# MGUAPPS - источник для mgu Store от CEBEP SPB
+# MGUAPPS - mgu Store source by CEBEP SPB
 
-Дополнения для [mgu Store](https://github.com/robertnisipeanu/mgu-store) на головах BMW MGU (iDrive 7).
+Add-ons for [mgu Store](https://github.com/robertnisipeanu/mgu-store) on BMW MGU head units (iDrive 7).
 
-## Как добавить в машину
+## How to add it in the car
 
-В приложении Store на голове: **Источники → добавить**, ввести
+In the Store app on the head unit: **Sources -> add**, type
 
 ```
 CEBEP-SPB/MGUAPPS
 ```
 
-и выбрать канал **Branch** (ветка `main`). Голове нужен интернет.
+and pick the **Branch** channel (branch `main`). The head unit needs internet.
 
-## Что здесь есть
+## What is here
 
-| Тул | Что делает | Требует |
+| Tool | What it does | Needs |
 |---|---|---|
-| [Yandex on cluster: map zone](tools/cebep-map-zone) | Ставит Яндекс Навигатор по центру щитка: сдвигает зону карты CarPlay | Maps on cluster 0.11.0+ |
+| [Yandex on cluster: map zone](tools/cebep-map-zone) | Puts Yandex Navigator in the middle of the instrument cluster by moving the CarPlay map zone | Maps on cluster 0.11.0+ |
 
 ### Yandex on cluster: map zone
 
-Для машин, где карта на щитке уже работает через **Maps on cluster** (`robertnisipeanu/idrive-apps`) версии 0.11.0 или новее, а Яндекс Навигатор стоит левее центра.
+For cars where the cluster map already works through **Maps on cluster** (`robertnisipeanu/idrive-apps`) 0.11.0 or newer, and Yandex Navigator sits left of the centre.
 
-1. В приложении Maps on cluster на вкладке CarPlay нажат **Patch**, карта на щитке показывается.
-2. Установить тул из этого источника.
-3. Перезагрузить голову.
+1. **Patch** was pressed on the CarPlay tab of the Maps on cluster app, the map shows on the cluster.
+2. Install the tool from this source.
+3. Restart the head unit.
 
-Важно знать:
+Good to know:
 
-- зона одна на все навигаторы CarPlay - после сдвига под Яндекс подсказки в Apple Maps и Waze могут встать не на место;
-- кнопка **Patch** в приложении Maps on cluster возвращает штатную зону; чтобы вернуть свою, переустановить тул и перезагрузить голову;
-- удаление тула возвращает штатную зону;
-- в системный раздел головы тул ничего не пишет и при загрузке ничего не запускает.
+- the zone is one for all CarPlay navigation apps - after moving it for Yandex, guidance in Apple Maps and Waze may be misplaced;
+- the **Patch** button in the Maps on cluster app puts the default zone back; to restore yours, reinstall the tool and restart the head unit;
+- removing the tool puts the default zone back;
+- carplay on the system partition is not modified, nothing runs at boot;
+- if the old `cluster-yandex-safearea-fix` is installed and cannot be removed, this tool leaves an empty backup record for it so the Store can remove it.
 
-Подробности, своя зона и проверка - в [описании тула](tools/cebep-map-zone/README.md).
+Details, your own zone and checks are in the [tool description](tools/cebep-map-zone/README.md).
 
-**Статус: тестовая версия 0.1.0.** Логика проверена на стенде против модуля планов Maps on cluster 0.11.0; на машинах пока не обкатана.
+**Status: test version 0.2.0.** The logic is tested on a bench against the plan module of Maps on cluster 0.11.0; not yet proven on cars.
 
-## Ответственность
+## Disclaimer
 
-Всё здесь - неофициальные дополнения, без связи с BMW. Ставите на свой риск. Код открыт, лицензия GPL-3.0-or-later.
+Everything here is unofficial, not affiliated with BMW. Use at your own risk. Open source, GPL-3.0-or-later.

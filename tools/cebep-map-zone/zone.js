@@ -1,23 +1,32 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 CEBEP SPB
-/* zone.js - зона карты на щитке под Яндекс Навигатор, для Maps on cluster
- * (waze-on-cluster) 0.11.0 и новее.
+/* zone.js - cluster map zone for Yandex Navigator, for Maps on cluster
+ * (waze-on-cluster) 0.11.0 and newer.
  *
- * С 0.11.0 Maps on cluster не правит /usr/bin/carplay: он держит "план" правок
- * (/var/opt/waze-on-cluster/inmem-carplay.plan) и накладывает его на CarPlay в
- * памяти при каждом запуске. План делает его же генератор, и у генератора есть
- * штатный параметр --safe ШxВ+X+Y. Этот тул делает одно: просит тот же генератор
- * (inmem.makePlan) сделать план заново с теми же параметрами плюс --safe.
- * Все проверки (сборка CarPlay, кодировка, места правок, контрольные суммы)
- * остаются за Maps on cluster; новый план он сам ставит "на испытание".
+ * Since 0.11.0 Maps on cluster does not edit /usr/bin/carplay: it keeps a
+ * "plan" of edits (/var/opt/waze-on-cluster/inmem-carplay.plan) and applies it
+ * to CarPlay in memory at every start. The plan is made by its own generator,
+ * which has a regular --safe WxH+X+Y option. This tool does one thing: it asks
+ * that generator (inmem.makePlan) to make the plan again with the same
+ * arguments plus --safe. Every check (CarPlay build, coding, edit sites,
+ * checksums) stays with Maps on cluster; it puts the new plan on trial itself.
  *
- *   zone.js activate     установка / обновление: записать зону в план
- *   zone.js deactivate   удаление: вернуть штатную зону. Никогда не мешает удалению.
- *   zone.js status       показать, что сейчас в плане (только чтение)
+ *   zone.js activate     install / update: write the zone into the plan
+ *   zone.js deactivate   removal: put the default zone back. Never blocks removal.
+ *   zone.js status       show what the plan holds now (read-only)
  *
- * В системный раздел ничего не пишется, при загрузке ничего не запускается.
- * Вступает в силу при следующем старте головы. Node 8, без зависимостей.
+ * Nothing runs at boot. Takes effect at the next head-unit start.
+ *
+ * One exception to "nothing is written to the system partition": when the old
+ * third-party tool cluster-yandex-safearea-fix is installed and has lost its
+ * backup record, the Store cannot remove it (its removal hook exits 1 with
+ * "no backup ... nothing to revert"). activate then leaves an empty backup
+ * record next to carplay (a ~100 byte JSON, carplay itself is not touched) so
+ * that the old tool can be removed in the Store; its own removal deletes the
+ * record again. See helpOldFix().
+ *
+ * Node 8, no dependencies. All output is ASCII.
  */
 'use strict';
 
@@ -33,7 +42,7 @@ var DEFAULT_SAFE = '504x368+456+72';
 function say(line) { process.stdout.write('zone: ' + line + '\n'); }
 function finish(result, code) { process.stdout.write(JSON.stringify(result) + '\n'); process.exit(code); }
 
-/* "504x368+456+72" -> та же строка, если формат и границы в порядке, иначе null. */
+/* "504x368+456+72" -> the same string when the format and bounds are fine, else null. */
 function checkSafe(text) {
     var m = /^\s*(\d+)x(\d+)\+(\d+)\+(\d+)\s*$/.exec(text || '');
     if (!m) return null;
@@ -53,21 +62,21 @@ function confSafe(file) {
     return found;
 }
 
-/* Какую зону ставить и откуда она взята. Битая строка в своём файле не роняет
- * установку молча: о ней говорится, и берётся следующая по порядку. */
+/* Which zone to set and where it came from. A bad line in the local file does
+ * not fail silently: it is reported and the next source is used. */
 function wantedSafe() {
     var local = confSafe(LOCAL_CONF);
     if (local !== null) {
         var okLocal = checkSafe(local);
         if (okLocal) return { safe: okLocal, from: LOCAL_CONF };
-        say('в ' + LOCAL_CONF + ' зона "' + local + '" не годится (нужно ШxВ+X+Y внутри ' + FRAME.w + 'x' + FRAME.h + ') - беру зону из комплекта');
+        say('zone "' + local + '" in ' + LOCAL_CONF + ' is not valid (need WxH+X+Y inside ' + FRAME.w + 'x' + FRAME.h + ') - using the shipped zone');
     }
     var shipped = checkSafe(confSafe(SHIPPED_CONF));
     if (shipped) return { safe: shipped, from: 'zone.conf' };
-    return { safe: DEFAULT_SAFE, from: 'встроенная' };
+    return { safe: DEFAULT_SAFE, from: 'built-in' };
 }
 
-/* Параметры плана без --safe и его значения. */
+/* The plan arguments without --safe and its value. */
 function stripSafe(args) {
     var out = [];
     for (var i = 0; i < args.length; i++) {
@@ -81,36 +90,100 @@ function argOf(args, name) {
     return i >= 0 && i + 1 < args.length ? args[i + 1] : null;
 }
 
-/* Модули Maps on cluster с головы. null и причина, если его нет или он старее 0.11.0. */
+/* Maps on cluster's modules on the unit. An error text when it is missing or older than 0.11.0. */
 function loadWoc() {
     var inmem;
     try { inmem = require(path.join(WOC, 'inmem.js')); }
-    catch (e) { return { err: 'Maps on cluster 0.11.0 или новее не найден (' + path.join(WOC, 'inmem.js') + '): поставь или обнови его в Магазине' }; }
+    catch (e) { return { err: 'Maps on cluster 0.11.0 or newer not found (' + path.join(WOC, 'inmem.js') + '): install or update it in the Store' }; }
     if (!inmem || typeof inmem.makePlan !== 'function' || typeof inmem.readRecord !== 'function')
-        return { err: 'у этой версии Maps on cluster другой механизм плана - тул под неё не рассчитан' };
+        return { err: 'this Maps on cluster version has a different plan mechanism - this tool does not support it' };
     return { inmem: inmem };
 }
 
-/* Что сейчас записано про план CarPlay и можно ли менять в нём зону. */
+/* What is recorded about the CarPlay plan and whether its zone can be changed. */
 function inspect(inmem) {
     var rec = inmem.readRecord('carplay');
-    if (!rec) return { err: 'у Maps on cluster нет плана патча CarPlay: открой приложение Maps on cluster, вкладка CarPlay, нажми Patch, перезагрузи голову и поставь этот тул ещё раз' };
-    if (rec.needsPlan) return { err: 'Maps on cluster сам не смог сделать план (' + (rec.error || 'причина не записана') + '): сначала почини карту кнопкой Patch в её приложении' };
-    if (rec.enabled !== true) return { err: 'патч CarPlay в Maps on cluster выключен' + (rec.by ? ' (' + rec.by + ')' : '') + ': включи его кнопкой Patch в приложении карты' };
-    if (!Array.isArray(rec.args)) return { err: 'в записи плана нет его параметров - тул под такую версию Maps on cluster не рассчитан' };
+    if (!rec) return { err: 'Maps on cluster has no CarPlay patch plan: open the Maps on cluster app, CarPlay tab, press Patch, restart the head unit and install this tool again' };
+    if (rec.needsPlan) return { err: 'Maps on cluster could not make its plan (' + (rec.error || 'no reason recorded') + '): fix the map first with Patch in its app' };
+    if (rec.enabled !== true) return { err: 'the CarPlay patch is disabled in Maps on cluster' + (rec.by ? ' (' + rec.by + ')' : '') + ': enable it with Patch in the map app' };
+    if (!Array.isArray(rec.args)) return { err: 'the plan record has no arguments - this tool does not support this Maps on cluster version' };
     var panel = argOf(rec.args, '--panel');
-    if (panel !== 'high') return { err: 'патч карты стоит в режиме panel ' + (panel || '?') + ': зона задаётся только в режиме high' };
-    if (argOf(rec.args, '--res') === 'stock') return { err: 'патч карты стоит со штатным разрешением (--res stock): зона в этом режиме не задаётся' };
+    if (panel !== 'high') return { err: 'the map patch is in panel ' + (panel || '?') + ' mode: the zone exists only in panel high mode' };
+    if (argOf(rec.args, '--res') === 'stock') return { err: 'the map patch uses the stock resolution (--res stock): there is no zone in this mode' };
     return { rec: rec, safe: argOf(rec.args, '--safe') };
 }
 
-/* Счётчик сбоев boot recovery относится к прежнему плану: новому он не нужен.
- * Не получилось - не страшно, это только счётчик. */
+/* The boot-recovery failure count belongs to the previous plan; the new one
+ * starts clean. A failure here does not matter, it is only a counter. */
 function resetRecovery() {
     try {
         var rec = require(path.join(WOC, 'recovery.js'));
         new rec.Recovery({ target: rec.TARGETS.carplay }).resetCount();
-    } catch (e) { say('счётчик boot recovery не сброшен (' + e.message + ') - это не мешает'); }
+    } catch (e) { say('boot-recovery counter not reset (' + e.message + ') - harmless'); }
+}
+
+/* ---- the old third-party tool cluster-yandex-safearea-fix -------------------
+ * It patched /usr/bin/carplay on disk and kept a backup record beside it. Maps
+ * on cluster 0.11.0 put carplay back to stock, and on many units the record is
+ * gone - then the old tool's removal hook dies with "no backup ... nothing to
+ * revert" and the Store refuses to remove it. With a record that lists no
+ * regions the same hook has nothing to write, reports "already reverted",
+ * deletes the record and exits 0.
+ *
+ * So: only when the old tool is installed AND its record is missing, write
+ * that empty record. / is read-only on the unit, so it is remounted read-write
+ * for this one small file and read-only again, under Maps on cluster's remount
+ * lock when it is there. carplay itself is never opened for writing. Any
+ * failure here is reported and ignored: it must not fail the zone. */
+var OLD_FIX_DIR = process.env.CEBEP_OLD_FIX_DIR || '/var/opt/cluster-yandex-safearea-fix';
+var CARPLAY = process.env.CEBEP_CARPLAY || '/usr/bin/carplay';
+var OLD_BACKUP = CARPLAY + '.woc-safearea.json';
+var MOUNT = process.env.CEBEP_MOUNT || '/bin/mount';
+var PROC_MOUNTS = process.env.CEBEP_PROC_MOUNTS || '/proc/mounts';
+
+function oldFixInstalled() { try { return fs.statSync(OLD_FIX_DIR).isDirectory(); } catch (e) { return false; } }
+function rootState() {
+    try {
+        var lines = fs.readFileSync(PROC_MOUNTS, 'utf8').split('\n'), opts = null;
+        for (var i = 0; i < lines.length; i++) { var p = lines[i].split(' '); if (p[1] === '/') opts = p[3]; }
+        if (opts !== null) return /(^|,)ro(,|$)/.test(opts) ? 'ro' : 'rw';
+    } catch (e) {}
+    return null;
+}
+function remount(mode) {
+    var cp = require('child_process');
+    var r = cp.spawnSync(MOUNT, ['-o', 'remount,' + mode, '/'], { timeout: 15000 });
+    return !r.error && r.status === 0;
+}
+function sleepMs(ms) { var end = Date.now() + ms; while (Date.now() < end) {} }
+function helpOldFix() {
+    var lock = null, locked = false, madeRw = false;
+    try {
+        if (!oldFixInstalled()) return;
+        if (fs.existsSync(OLD_BACKUP)) { say('old cluster-yandex-safearea-fix is installed and has a backup record - not touching it'); return; }
+        if (!fs.existsSync(CARPLAY)) { say('old cluster-yandex-safearea-fix is installed, but ' + CARPLAY + ' is not there - leaving it alone'); return; }
+        var state = rootState();
+        if (state === null) { say('old cluster-yandex-safearea-fix: cannot tell whether / is read-only - not writing its backup record'); return; }
+        try { lock = require(path.join(WOC, 'remount_lock.js')); locked = lock.tryAcquire(); } catch (e) { lock = null; }
+        if (lock && !locked) { say('old cluster-yandex-safearea-fix: another tool is writing to / right now - backup record not written, install this tool again later'); return; }
+        if (state === 'ro') {
+            if (!remount('rw')) { say('old cluster-yandex-safearea-fix: could not remount / read-write - backup record not written'); return; }
+            madeRw = true;
+        }
+        var body = JSON.stringify({ buildId: 'none', binaryId: 'none', savedAt: new Date().toISOString(), by: 'cebep-map-zone', regions: {} }, null, 2) + '\n';
+        var fd = fs.openSync(OLD_BACKUP, 'wx', 0o600);
+        try { fs.writeSync(fd, body); fs.fsyncSync(fd); } finally { fs.closeSync(fd); }
+        say('old cluster-yandex-safearea-fix had no backup record: wrote an empty one (' + OLD_BACKUP + '), it can be removed in the Store now');
+    } catch (e) {
+        say('old cluster-yandex-safearea-fix: backup record not written (' + e.message + ') - harmless for the zone');
+    } finally {
+        if (madeRw) {
+            var ro = false;
+            for (var i = 0; i < 4 && !ro; i++) { if (i) sleepMs(500); remount('ro'); ro = rootState() === 'ro'; }
+            if (!ro) say('WARNING: / is still read-write after remount; the next head-unit start mounts it read-only again');
+        }
+        if (lock && locked) { try { lock.release(); } catch (e) {} }
+    }
 }
 
 function replan(inmem, args, cb) {
@@ -119,45 +192,46 @@ function replan(inmem, args, cb) {
 }
 
 function activate() {
+    helpOldFix();
     var woc = loadWoc();
-    if (woc.err) { finish({ status: 'зона не записана: ' + woc.err }, 1); return; }
+    if (woc.err) { finish({ status: 'zone not written: ' + woc.err }, 1); return; }
     var now = inspect(woc.inmem);
-    if (now.err) { finish({ status: 'зона не записана: ' + now.err }, 1); return; }
+    if (now.err) { finish({ status: 'zone not written: ' + now.err }, 1); return; }
     var want = wantedSafe();
-    say('нужна зона ' + want.safe + ' (' + want.from + '), сейчас в плане: ' + (now.safe || 'штатная'));
-    if (now.safe === want.safe) { finish({ status: 'зона ' + want.safe + ' уже стоит в плане карты' }, 0); return; }
+    say('wanted zone ' + want.safe + ' (' + want.from + '), in the plan now: ' + (now.safe || 'default'));
+    if (now.safe === want.safe) { finish({ status: 'zone ' + want.safe + ' is already in the map plan' }, 0); return; }
     var args = stripSafe(now.rec.args).concat(['--safe', want.safe]);
     replan(woc.inmem, args, function (err) {
-        /* Не получилось - прежний план Maps on cluster остался как был: генератор
-         * пишет новый во временный файл и подменяет только готовый. */
-        if (err) { finish({ status: 'зона не записана, план карты остался прежним: ' + err.message }, 1); return; }
+        /* On failure Maps on cluster's previous plan stays as it was: the
+         * generator writes the new one to a temp file and swaps only a finished one. */
+        if (err) { finish({ status: 'zone not written, the map plan is unchanged: ' + err.message }, 1); return; }
         resetRecovery();
-        finish({ status: 'зона ' + want.safe + ' записана в план карты',
+        finish({ status: 'zone ' + want.safe + ' written into the map plan',
                  reboot: 'cluster map zone ' + want.safe + ' takes effect at the next head-unit start' }, 0);
     });
 }
 
-/* Удаление: вернуть штатную зону. Что бы ни случилось - код 0: тул, который
- * нельзя удалить, хуже, чем оставшаяся своя зона (её сбрасывает Patch в
- * приложении карты). */
+/* Removal: put the default zone back. Whatever happens it exits 0: a tool that
+ * cannot be removed is worse than a leftover zone (Patch in the map app
+ * resets it). */
 function deactivate() {
     var woc = loadWoc();
-    if (woc.err) { finish({ status: 'возвращать нечего: ' + woc.err }, 0); return; }
+    if (woc.err) { finish({ status: 'nothing to restore: ' + woc.err }, 0); return; }
     var rec = null;
     try { rec = woc.inmem.readRecord('carplay'); } catch (e) {}
     if (!rec || !Array.isArray(rec.args) || rec.args.indexOf('--safe') < 0) {
-        finish({ status: 'возвращать нечего: в плане карты штатная зона' }, 0); return;
+        finish({ status: 'nothing to restore: the map plan has the default zone' }, 0); return;
     }
     if (rec.needsPlan || rec.enabled !== true) {
-        finish({ status: 'план карты сейчас не действует; штатную зону вернёт Patch в приложении Maps on cluster' }, 0); return;
+        finish({ status: 'the map plan is not active now; Patch in the Maps on cluster app restores the default zone' }, 0); return;
     }
     replan(woc.inmem, stripSafe(rec.args), function (err) {
         if (err) {
-            finish({ status: 'штатную зону вернуть не удалось (' + err.message + '); тул удаляется, зону сбросит Patch в приложении Maps on cluster' }, 0);
+            finish({ status: 'could not restore the default zone (' + err.message + '); the tool is removed anyway, Patch in the Maps on cluster app resets the zone' }, 0);
             return;
         }
         resetRecovery();
-        finish({ status: 'в план карты возвращена штатная зона',
+        finish({ status: 'default zone restored in the map plan',
                  reboot: 'default cluster map zone takes effect at the next head-unit start' }, 0);
     });
 }
@@ -166,12 +240,13 @@ function status() {
     var woc = loadWoc();
     if (woc.err) { say(woc.err); process.exit(0); }
     var rec = woc.inmem.readRecord('carplay'), want = wantedSafe();
-    say('нужна зона: ' + want.safe + ' (' + want.from + ')');
-    if (!rec) { say('плана патча CarPlay нет'); process.exit(0); }
-    say('план: ' + (rec.needsPlan ? 'не сделан (' + (rec.error || '?') + ')' : rec.enabled === true ? 'включён' : 'выключен' + (rec.by ? ' (' + rec.by + ')' : '')) +
-        (rec.trial ? ', на испытании' : rec.proven ? ', проверен' : ''));
-    say('параметры плана: ' + (Array.isArray(rec.args) ? rec.args.join(' ') : '?'));
-    say('зона в плане: ' + ((Array.isArray(rec.args) && argOf(rec.args, '--safe')) || 'штатная'));
+    say('wanted zone: ' + want.safe + ' (' + want.from + ')');
+    if (!rec) { say('no CarPlay patch plan'); process.exit(0); }
+    say('plan: ' + (rec.needsPlan ? 'not made (' + (rec.error || '?') + ')' : rec.enabled === true ? 'enabled' : 'disabled' + (rec.by ? ' (' + rec.by + ')' : '')) +
+        (rec.trial ? ', on trial' : rec.proven ? ', proven' : ''));
+    say('plan arguments: ' + (Array.isArray(rec.args) ? rec.args.join(' ') : '?'));
+    say('zone in the plan: ' + ((Array.isArray(rec.args) && argOf(rec.args, '--safe')) || 'default'));
+    say('old cluster-yandex-safearea-fix: ' + (!oldFixInstalled() ? 'not installed' : 'installed, backup record ' + (fs.existsSync(OLD_BACKUP) ? 'present' : 'missing') + ' - remove it in the Store'));
     process.exit(0);
 }
 

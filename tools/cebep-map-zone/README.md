@@ -1,74 +1,90 @@
-# cebep-map-zone - зона карты на щитке под Яндекс Навигатор
+# cebep-map-zone - cluster map zone for Yandex Navigator
 
-Тул для [mgu Store](https://github.com/robertnisipeanu/mgu-store), дополнение к
-**Maps on cluster** (waze-on-cluster, `robertnisipeanu/idrive-apps`) версии **0.11.0 и новее**.
+A tool for [mgu Store](https://github.com/robertnisipeanu/mgu-store), an add-on to
+**Maps on cluster** (waze-on-cluster, `robertnisipeanu/idrive-apps`) **0.11.0 and newer**.
 
-## Зачем
+## Why
 
-CarPlay получает от головы одну "безопасную зону" на все навигаторы. Штатная зона
-Maps on cluster (`504x368+286+72`) подобрана под Apple Maps; Яндекс Навигатор с ней
-ставит машину левее центра щитка. Этот тул сдвигает зону под Яндекс.
+CarPlay gets one "safe area" from the head unit for every navigation app. Maps on
+cluster's default zone (`504x368+286+72`) suits Apple Maps; with it Yandex Navigator
+puts the car left of the middle of the instrument cluster. This tool moves the zone
+for Yandex.
 
-Зона одна на все приложения CarPlay: то, что хорошо Яндексу, может сдвинуть
-подсказки в Apple Maps и Waze. Ставить, если на щитке нужен именно Яндекс.
+The zone is one for all CarPlay apps: what suits Yandex may misplace guidance in
+Apple Maps and Waze. Install it if Yandex is what you want on the cluster.
 
-## Как работает
+## How it works
 
-С 0.11.0 Maps on cluster не правит файл `/usr/bin/carplay`: он держит план правок и
-накладывает его на CarPlay в памяти при запуске. План делает его собственный
-генератор, у которого есть штатный параметр `--safe`. Тул делает одно: просит этот
-генератор сделать план заново с теми же параметрами плюс `--safe <зона>`.
+Since 0.11.0 Maps on cluster does not edit `/usr/bin/carplay`: it keeps a plan of
+edits and applies it to CarPlay in memory at start. The plan is made by its own
+generator, which has a regular `--safe` option. This tool does one thing: it asks
+that generator to make the plan again with the same arguments plus `--safe <zone>`.
 
-- в системный раздел ничего не пишется;
-- при загрузке ничего не запускается, служб нет;
-- все проверки (сборка CarPlay, кодировка, места правок) остаются за Maps on cluster;
-- новый план Maps on cluster сам ставит на испытание и отключает, если CarPlay с ним падает.
+- `/usr/bin/carplay` is not modified;
+- nothing runs at boot, there are no services;
+- every check (CarPlay build, coding, edit sites) stays with Maps on cluster;
+- Maps on cluster puts the new plan on trial itself and disables it if CarPlay crashes with it.
 
-## Установка
+## Install
 
-1. Maps on cluster 0.11.0+ установлен, в его приложении на вкладке CarPlay нажат **Patch**, карта на щитке работает.
-2. В Магазине добавить этот репозиторий как источник, канал - ветка (branch).
-3. Установить **Yandex on cluster: map zone**. Перезагрузить голову.
+1. Maps on cluster 0.11.0+ is installed, **Patch** was pressed on the CarPlay tab of its app, the map shows on the cluster.
+2. Add this repository as a source in the Store, channel: Branch.
+3. Install **Yandex on cluster: map zone**. Restart the head unit.
 
-Если тул не может записать зону, установка завершается ошибкой с причиной
-(карта не пропатчена, патч выключен, режим `panel mid`) - молча "установленным, но
-не работающим" он не остаётся.
+If the tool cannot write the zone, the install fails with the reason (map not
+patched, patch disabled, `panel mid` mode) - it never stays "installed but not working".
 
-## Своя зона
+## Your own zone
 
-По умолчанию `504x368+456+72` (ШxВ+X+Y в кадре 1088x480). Машина левее центра - X больше.
+Default is `504x368+456+72` (WxH+X+Y inside the 1088x480 frame). Car left of centre - make X bigger.
 
-Свою зону положить в `/var/opt/cebep-map-zone/zone.local.conf`:
+Put your zone into `/var/opt/cebep-map-zone/zone.local.conf`:
 
 ```
 safe=504x368+433+72
 ```
 
-затем в Магазине обновить / переустановить тул и перезагрузить голову.
+then reinstall the tool in the Store and restart the head unit.
 
-## Что сбрасывает зону
+## What resets the zone
 
-- кнопка **Patch** в приложении Maps on cluster - она делает план со штатной зоной.
-  Вернуть: переустановить этот тул в Магазине, ребут;
-- обновление Maps on cluster зону сохраняет (он пересоздаёт план с прежними параметрами).
+- the **Patch** button in the Maps on cluster app - it makes a plan with the default zone.
+  To get yours back: reinstall this tool in the Store, restart;
+- a Maps on cluster update keeps the zone (it remakes the plan with the same arguments).
 
-Приложение Maps on cluster будет показывать, что зона отличается от штатной, и
-предлагать Patch - это ожидаемо.
+The Maps on cluster app will show that the zone differs from the default and offer
+Patch - that is expected.
 
-## Проверка и удаление
+## The old cluster-yandex-safearea-fix
 
-Посмотреть, что сейчас в плане (только чтение):
+The older third-party tool `usharafiev/cluster-yandex-safearea-fix` patched carplay
+on disk. It does nothing with Maps on cluster 0.11.0+, and on many units the Store
+cannot remove it: its removal fails with
+`no backup at /usr/bin/carplay.woc-safearea.json; nothing to revert`.
+
+When this tool is installed and sees the old one **without** that backup record, it
+writes an empty record (`/usr/bin/carplay.woc-safearea.json`, about 100 bytes; the
+system partition is opened for writing only for this file and closed again; carplay
+itself is not touched). After that the old tool can be removed in the Store the
+normal way, and its own removal deletes the record.
+
+This tool does not remove the old one itself. The two do not fight on 0.11.0+, but
+there is no reason to keep both.
+
+## Check and removal
+
+See what the plan holds now (read-only):
 
 ```
 node /var/opt/cebep-map-zone/current/zone.js status
 ```
 
-Удаление в Магазине возвращает штатную зону. Удаление никогда не блокируется:
-если вернуть зону не получилось, тул всё равно удаляется, а зону сбрасывает Patch.
+Removing the tool in the Store puts the default zone back. Removal is never blocked:
+if the zone could not be restored, the tool is removed anyway and Patch resets the zone.
 
-## Ограничения
+## Limits
 
-- только iDrive 7, только Maps on cluster 0.11.0+. На 0.10.x и старее не ставится;
-- если автор Maps on cluster снова поменяет механизм патча, тул откажется с понятной причиной, а не сломает карту.
+- iDrive 7 only, Maps on cluster 0.11.0+ only. It does not install on 0.10.x and older;
+- if Maps on cluster changes its patch mechanism again, the tool refuses with a clear reason instead of breaking the map.
 
 GPL-3.0-or-later.
