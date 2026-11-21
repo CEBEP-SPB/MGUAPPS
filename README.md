@@ -17,6 +17,7 @@ and pick the **Branch** channel (branch `main`). The head unit needs internet.
 | Tool | What it does | Needs |
 |---|---|---|
 | [Yandex map fix](tools/cebep-map-zone) | Puts Yandex Navigator in the middle of the instrument cluster by moving the CarPlay map zone | Maps on cluster 0.11.0+ |
+| [CarPlay file check](tools/cebep-carplay-check) | Diagnostic, writes nothing: tells why Maps on cluster shows CarPlay as Failed / Changed by another tool | Maps on cluster 0.11.0+ |
 
 ### Yandex map fix
 
