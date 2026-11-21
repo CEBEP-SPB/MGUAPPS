@@ -36,7 +36,7 @@ Good to know:
 
 Details, your own zone and checks are in the [tool description](tools/cebep-map-zone/README.md).
 
-**Status: test version 0.2.0.** The logic is tested on a bench against the plan module of Maps on cluster 0.11.0; not yet proven on cars.
+**Status: test version 0.2.1.** The logic is tested on a bench against the plan module of Maps on cluster 0.11.0; not yet proven on cars.
 
 ## Disclaimer
 
