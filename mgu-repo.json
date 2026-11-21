@@ -28,6 +28,20 @@
         "mgu-deploy": "0.8.0",
         "waze-on-cluster": "0.11.0"
       }
+    },
+    {
+      "id": "cebep-carplay-restore",
+      "kind": "tool",
+      "path": "tools/cebep-carplay-restore",
+      "title": "CarPlay file repair (CEBEP)",
+      "mguHmi": [
+        "ID7"
+      ],
+      "uninstallable": true,
+      "requires": {
+        "mgu-deploy": "0.8.0",
+        "waze-on-cluster": "0.11.0"
+      }
     }
   ]
 }

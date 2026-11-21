@@ -1,0 +1,21 @@
+{
+  "id": "cebep-carplay-restore",
+  "kind": "tool",
+  "version": "0.1.0",
+  "license": "GPL-3.0-or-later",
+  "title": "CarPlay file repair (CEBEP)",
+  "description": "Only for cars where CarPlay file check (CEBEP) answered REPAIRABLE with res-safe1 / res-safe2. Puts the shipped safe-area bytes back into the CarPlay 22.28.3 file after the old cluster-yandex-safearea-fix, so Maps on cluster 0.11.0+ can patch again. Writes only when the result is the shipped file by SHA-256; in every other case it refuses and changes nothing. After install: restart the head unit, press Patch in Maps on cluster, then this tool can be removed.",
+  "requires": {
+    "mgu-deploy": "0.8.0",
+    "waze-on-cluster": "0.11.0"
+  },
+  "uninstallable": true,
+  "mguHmi": ["ID7"],
+  "activate": ["node", "restore.js", "activate"],
+  "deactivate": ["node", "restore.js", "deactivate"],
+  "files": [
+    { "path": "restore.js", "mode": "0644" },
+    { "path": "README.md", "mode": "0644" },
+    { "path": "LICENSE", "mode": "0644" }
+  ]
+}
