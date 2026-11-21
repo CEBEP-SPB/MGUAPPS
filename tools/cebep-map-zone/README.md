@@ -62,11 +62,16 @@ on disk. It does nothing with Maps on cluster 0.11.0+, and on many units the Sto
 cannot remove it: its removal fails with
 `no backup at /usr/bin/carplay.woc-safearea.json; nothing to revert`.
 
-When this tool is installed and sees the old one **without** that backup record, it
-writes an empty record (`/usr/bin/carplay.woc-safearea.json`, about 100 bytes; the
+When this tool is installed, the map plan in memory is working, and it sees the old
+one **without** that backup record, it writes an empty record (`/usr/bin/carplay.woc-safearea.json`, about 100 bytes; the
 system partition is opened for writing only for this file and closed again; carplay
 itself is not touched). After that the old tool can be removed in the Store the
 normal way, and its own removal deletes the record.
+
+If the Maps on cluster app shows CarPlay as **changed by another tool** and this tool
+refuses with `no CarPlay patch plan`: carplay on disk still carries the old fix's edit.
+Remove the old fix in the Store first (it undoes its own edit), then press Patch in the
+Maps on cluster app, restart, and install this tool.
 
 This tool does not remove the old one itself. The two do not fight on 0.11.0+, but
 there is no reason to keep both.

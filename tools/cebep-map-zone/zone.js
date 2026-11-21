@@ -130,8 +130,9 @@ function resetRecovery() {
  * regions the same hook has nothing to write, reports "already reverted",
  * deletes the record and exits 0.
  *
- * So: only when the old tool is installed AND its record is missing, write
- * that empty record. / is read-only on the unit, so it is remounted read-write
+ * So: only when the old tool is installed AND its record is missing AND Maps
+ * on cluster has a working in-memory plan (so carplay on disk is stock and the
+ * old tool has nothing left to undo), write that empty record. / is read-only on the unit, so it is remounted read-write
  * for this one small file and read-only again, under Maps on cluster's remount
  * lock when it is there. carplay itself is never opened for writing. Any
  * failure here is reported and ignored: it must not fail the zone. */
@@ -192,11 +193,20 @@ function replan(inmem, args, cb) {
 }
 
 function activate() {
-    helpOldFix();
     var woc = loadWoc();
     if (woc.err) { finish({ status: 'zone not written: ' + woc.err }, 1); return; }
     var now = inspect(woc.inmem);
-    if (now.err) { finish({ status: 'zone not written: ' + now.err }, 1); return; }
+    if (now.err) {
+        /* No working in-memory plan while the old fix is installed usually means
+         * carplay on disk still carries an earlier disk patch plus the old fix's
+         * edit, which Maps on cluster reports as changed by another tool. The old
+         * fix must undo its own edit first, with its own backup. */
+        var hint = oldFixInstalled() ? '. The old cluster-yandex-safearea-fix is installed: if the Maps on cluster app shows CarPlay as changed by another tool, remove the old fix in the Store first, then press Patch' : '';
+        finish({ status: 'zone not written: ' + now.err + hint }, 1); return;
+    }
+    /* Only now: a working in-memory plan means carplay on disk is stock, so an
+     * empty backup record cannot hide an edit the old fix still has to undo. */
+    helpOldFix();
     var want = wantedSafe();
     say('wanted zone ' + want.safe + ' (' + want.from + '), in the plan now: ' + (now.safe || 'default'));
     if (now.safe === want.safe) { finish({ status: 'zone ' + want.safe + ' is already in the map plan' }, 0); return; }
