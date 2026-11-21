@@ -68,6 +68,11 @@ system partition is opened for writing only for this file and closed again; carp
 itself is not touched). After that the old tool can be removed in the Store the
 normal way, and its own removal deletes the record.
 
+If the map is gone after updating Maps on cluster to 0.11.0 (CarPlay **Failed** in its app): the old
+fix left its map zone in the CarPlay file. This tool sees that (it only reads the file) and says so:
+install **CarPlay file repair (CEBEP)** from this source, restart, press Patch, restart, install this
+tool again.
+
 If the Maps on cluster app shows CarPlay as **changed by another tool** and this tool
 refuses with `no CarPlay patch plan`: carplay on disk still carries the old fix's edit.
 Remove the old fix in the Store first (it undoes its own edit), then press Patch in the

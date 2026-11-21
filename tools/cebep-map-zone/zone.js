@@ -187,6 +187,26 @@ function helpOldFix() {
     }
 }
 
+/* Read-only: whether /usr/bin/carplay is the 22.28.3 build that differs from
+ * the shipped file only in the 16 safe-area bytes (what the old fix's removal
+ * leaves there) - the case CarPlay file repair (CEBEP) mends. The shipped bytes
+ * and SHA-256 are Maps on cluster's own (carplay_patch.js, PROVEN). Any doubt
+ * reads as "no". */
+var CP_BUILD = '5de62156575d737391ea42254e778a97dbbb51f8';
+var CP_SHA = process.env.CEBEP_TEST_SHA || 'ddb33e33161387c6479c391684b3d019b0de54ecfcee8d6877eca94aa62f3e50';
+var CP_SAFE = [[0x20ca66, '0000000064020000'], [0x20ca74, '0e0200000202c000']];
+function leftoverZone() {
+    try {
+        var crypto = require('crypto');
+        var buf = fs.readFileSync(CARPLAY);
+        if (require(path.join(WOC, 'carplay_locate.js')).buildId(buf) !== CP_BUILD) return false;
+        if (crypto.createHash('sha256').update(buf).digest('hex') === CP_SHA) return false;
+        var out = Buffer.from(buf);
+        CP_SAFE.forEach(function (s) { Buffer.from(s[1], 'hex').copy(out, s[0]); });
+        return !out.equals(buf) && crypto.createHash('sha256').update(out).digest('hex') === CP_SHA;
+    } catch (e) { return false; }
+}
+
 function replan(inmem, args, cb) {
     try { inmem.makePlan('carplay', args, 90000, function (err, rec) { cb(err || null, rec); }); }
     catch (e) { cb(e); }
@@ -202,6 +222,15 @@ function activate() {
          * edit, which Maps on cluster reports as changed by another tool. The old
          * fix must undo its own edit first, with its own backup. */
         var hint = oldFixInstalled() ? '. The old cluster-yandex-safearea-fix is installed: if the Maps on cluster app shows CarPlay as changed by another tool, remove the old fix in the Store first, then press Patch' : '';
+        /* Read-only look at the file: the old fix's zone left in carplay is the
+         * usual reason Maps on cluster has no plan. This tool never writes
+         * carplay; it names the tool that does. */
+        if (leftoverZone()) {
+            finish({ status: 'zone not written: the CarPlay file still holds the map zone of the old cluster-yandex-safearea-fix, so Maps on cluster cannot patch. ' +
+                (oldFixInstalled() ? 'Remove the old cluster-yandex-safearea-fix in the Store, then install ' : 'Install ') +
+                'CarPlay file repair (CEBEP) from this source, restart the head unit, press Patch in the Maps on cluster app, restart, and install this tool again' }, 1);
+            return;
+        }
         finish({ status: 'zone not written: ' + now.err + hint }, 1); return;
     }
     /* Only now: a working in-memory plan means carplay on disk is stock, so an
@@ -249,6 +278,7 @@ function deactivate() {
 function status() {
     var woc = loadWoc();
     if (woc.err) { say(woc.err); process.exit(0); }
+    if (leftoverZone()) say('CarPlay file: still holds the old fix\'s map zone - install CarPlay file repair (CEBEP)');
     var rec = woc.inmem.readRecord('carplay'), want = wantedSafe();
     say('wanted zone: ' + want.safe + ' (' + want.from + ')');
     if (!rec) { say('no CarPlay patch plan'); process.exit(0); }
