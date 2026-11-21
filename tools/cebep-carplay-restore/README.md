@@ -1,7 +1,8 @@
 # cebep-carplay-restore - shipped safe area back into the CarPlay file
 
 A one-time repair for [mgu Store](https://github.com/robertnisipeanu/mgu-store). **It writes to
-`/usr/bin/carplay`** - read this page first.
+`/usr/bin/carplay`** - read this page first. Used on a car on 2026-11-21: the file was restored,
+Patch worked again and the cluster map came back.
 
 ## The one case it is for
 

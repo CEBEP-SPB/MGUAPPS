@@ -38,7 +38,18 @@ Good to know:
 
 Details, your own zone and checks are in the [tool description](tools/cebep-map-zone/README.md).
 
-**Status: 0.2.3, working.** Tested on a car on 2026-11-21 (iDrive 7, Maps on cluster 0.11.0).
+### Map gone after updating Maps on cluster to 0.11.0
+
+If the old `cluster-yandex-safearea-fix` was ever installed, Maps on cluster 0.11.0 may show CarPlay as
+**Failed** or **Changed by another tool**, and Patch does not help. The way out, all from this source:
+
+1. Remove the old `cluster-yandex-safearea-fix` in the Store.
+2. Install **CarPlay file check (CEBEP)**. It refuses on purpose; the red text is the result.
+3. If the text says `REPAIRABLE` with `res-safe1` / `res-safe2`: install **CarPlay file repair (CEBEP)**, restart the head unit.
+4. Maps on cluster - CarPlay - **Patch**, restart. The map is back.
+5. Install **Yandex map fix (CEBEP)**, restart. Remove CarPlay file repair.
+
+**Status (2026-11-21), all three run on cars:** Yandex map fix 0.2.3 - working. CarPlay file check 0.1.0 and CarPlay file repair 0.1.0 - used on a car where the old `cluster-yandex-safearea-fix` had left its zone in the CarPlay file: check said REPAIRABLE, repair restored the shipped file, Patch worked again, the cluster map came back.
 
 ## Disclaimer
 
