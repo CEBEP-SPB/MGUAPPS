@@ -1,0 +1,21 @@
+{
+  "id": "cebep-carplay-check",
+  "kind": "tool",
+  "version": "0.1.0",
+  "license": "GPL-3.0-or-later",
+  "title": "CarPlay file check (CEBEP)",
+  "description": "Diagnostic only, writes nothing. For cars where Maps on cluster 0.11.0+ shows CarPlay as Failed or Changed by another tool. Press Install: the install is refused on purpose and the red error text is the result - which bytes of the CarPlay file differ from the shipped build and whether they can be put back. Nothing stays installed. Send a photo of the error text.",
+  "requires": {
+    "mgu-deploy": "0.8.0",
+    "waze-on-cluster": "0.11.0"
+  },
+  "uninstallable": true,
+  "mguHmi": ["ID7"],
+  "activate": ["node", "check.js", "activate"],
+  "deactivate": ["node", "check.js", "deactivate"],
+  "files": [
+    { "path": "check.js", "mode": "0644" },
+    { "path": "README.md", "mode": "0644" },
+    { "path": "LICENSE", "mode": "0644" }
+  ]
+}
