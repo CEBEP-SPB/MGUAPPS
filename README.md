@@ -16,9 +16,9 @@ and pick the **Branch** channel (branch `main`). The head unit needs internet.
 
 | Tool | What it does | Needs |
 |---|---|---|
-| [YANDEX MAP FIX](tools/cebep-map-zone) | Puts Yandex Navigator in the middle of the instrument cluster by moving the CarPlay map zone | Maps on cluster 0.11.0+ |
+| [Yandex map fix](tools/cebep-map-zone) | Puts Yandex Navigator in the middle of the instrument cluster by moving the CarPlay map zone | Maps on cluster 0.11.0+ |
 
-### YANDEX MAP FIX
+### Yandex map fix
 
 For cars where the cluster map already works through **Maps on cluster** (`robertnisipeanu/idrive-apps`) 0.11.0 or newer, and Yandex Navigator sits left of the centre.
 
@@ -36,7 +36,7 @@ Good to know:
 
 Details, your own zone and checks are in the [tool description](tools/cebep-map-zone/README.md).
 
-**Status: 0.2.1, working.** Tested on a car on 2026-11-21 (iDrive 7, Maps on cluster 0.11.0).
+**Status: 0.2.2, working.** Tested on a car on 2026-11-21 (iDrive 7, Maps on cluster 0.11.0).
 
 ## Disclaimer
 
