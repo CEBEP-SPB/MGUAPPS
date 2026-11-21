@@ -29,7 +29,7 @@ that generator to make the plan again with the same arguments plus `--safe <zone
 
 1. Maps on cluster 0.11.0+ is installed, **Patch** was pressed on the CarPlay tab of its app, the map shows on the cluster.
 2. Add this repository as a source in the Store, channel: Branch.
-3. Install **YANDEX MAP FIX**. Restart the head unit.
+3. Install **Yandex map fix**. Restart the head unit.
 
 If the tool cannot write the zone, the install fails with the reason (map not
 patched, patch disabled, `panel mid` mode) - it never stays "installed but not working".
