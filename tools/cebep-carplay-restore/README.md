@@ -9,9 +9,9 @@ Patch worked again and the cluster map came back.
 - Maps on cluster 0.11.0+ shows CarPlay **Failed** / **Changed by another tool**, its log says
   `carplay was modified by something else`;
 - the old `cluster-yandex-safearea-fix` was installed on this car;
-- **CarPlay file check (CEBEP)** answered `Differs: res-safe1 ...; res-safe2 ... REPAIRABLE`.
+- **Yandex map fix (CEBEP)** refused to install and named this tool.
 
-Run the check first. If it says anything else, this tool will refuse as well.
+If the car is not in this state, the tool refuses with the reason and changes nothing.
 
 ## What it does
 
@@ -34,6 +34,7 @@ the shipped one is left alone.
 4. Remove this tool in the Store (it has nothing more to do). Removal changes nothing.
 5. For Yandex Navigator in the middle of the cluster: install **Yandex map fix (CEBEP)**.
 
-To confirm the result, run **CarPlay file check (CEBEP)** again: `OK: ... is the shipped file`.
+To confirm the result: Patch in Maps on cluster works again. Over SSH, `node restore.js status` says
+`... is the shipped file`.
 
 GPL-3.0-or-later. The shipped values are those of Maps on cluster's own table.
