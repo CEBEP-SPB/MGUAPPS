@@ -11,11 +11,8 @@ cluster patches in memory only over the shipped file.
 
 ## How to use it
 
-1. Add this repository as a source, channel Branch.
-2. Open **CarPlay file check (CEBEP)** and press Install.
-3. The install is **refused on purpose**. The red error text is the result. Take a photo of it.
-
-Nothing is installed and nothing on the head unit is changed.
+Not listed in the Store (Yandex map fix does the same check itself). Over SSH:
+`node check.js status`. Nothing on the head unit is changed.
 
 ## What the result says
 

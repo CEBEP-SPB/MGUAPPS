@@ -17,8 +17,7 @@ and pick the **Branch** channel (branch `main`). The head unit needs internet.
 | Tool | What it does | Needs |
 |---|---|---|
 | [Yandex map fix](tools/cebep-map-zone) | Puts Yandex Navigator in the middle of the instrument cluster by moving the CarPlay map zone | Maps on cluster 0.11.0+ |
-| [CarPlay file check](tools/cebep-carplay-check) | Diagnostic, writes nothing: tells why Maps on cluster shows CarPlay as Failed / Changed by another tool | Maps on cluster 0.11.0+ |
-| [CarPlay file repair](tools/cebep-carplay-restore) | One-time repair after the old Yandex fix: puts the shipped safe-area bytes back into the CarPlay file, only when the result is the shipped file by SHA-256 | Maps on cluster 0.11.0+, CarPlay 22.28.3, a REPAIRABLE answer from the check |
+| [CarPlay file repair](tools/cebep-carplay-restore) | One-time repair after the old Yandex fix: puts the shipped safe-area bytes back into the CarPlay file, only when the result is the shipped file by SHA-256 | Maps on cluster 0.11.0+, CarPlay 22.28.3 |
 
 ### Yandex map fix
 
@@ -44,12 +43,15 @@ If the old `cluster-yandex-safearea-fix` was ever installed, Maps on cluster 0.1
 **Failed** or **Changed by another tool**, and Patch does not help. The way out, all from this source:
 
 1. Remove the old `cluster-yandex-safearea-fix` in the Store.
-2. Install **CarPlay file check (CEBEP)**. It refuses on purpose; the red text is the result.
-3. If the text says `REPAIRABLE` with `res-safe1` / `res-safe2`: install **CarPlay file repair (CEBEP)**, restart the head unit.
-4. Maps on cluster - CarPlay - **Patch**, restart. The map is back.
-5. Install **Yandex map fix (CEBEP)**, restart. Remove CarPlay file repair.
+2. Install **CarPlay file repair (CEBEP)**, restart the head unit. If this is not that case, it refuses with the reason and changes nothing.
+3. Maps on cluster - CarPlay - **Patch**, restart. The map is back.
+4. Install **Yandex map fix (CEBEP)**, restart. Remove CarPlay file repair.
 
-**Status (2026-11-21), all three run on cars:** Yandex map fix 0.2.3 - working. CarPlay file check 0.1.0 and CarPlay file repair 0.1.0 - used on a car where the old `cluster-yandex-safearea-fix` had left its zone in the CarPlay file: check said REPAIRABLE, repair restored the shipped file, Patch worked again, the cluster map came back.
+Yandex map fix itself tells when this is needed: instead of installing, it names CarPlay file repair.
+
+**Status (2026-11-21), both run on cars:** Yandex map fix - working. CarPlay file repair - used on a car where the old `cluster-yandex-safearea-fix` had left its zone in the CarPlay file: the shipped file was restored, Patch worked again, the cluster map came back.
+
+`tools/cebep-carplay-check` is a read-only diagnostic kept in the repository but not listed in the Store: over SSH, `node check.js status` tells which bytes of the CarPlay file differ from the shipped build.
 
 ## Disclaimer
 
