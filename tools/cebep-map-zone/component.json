@@ -1,22 +1,57 @@
 {
   "id": "cebep-map-zone",
   "kind": "tool",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "license": "GPL-3.0-or-later",
   "title": "Yandex map fix (CEBEP)",
-  "description": "Moves the CarPlay cluster-map safe area so Yandex Navigator puts the car in the middle of the instrument cluster. For Maps on cluster (waze-on-cluster) 0.11.0 and newer, where CarPlay is patched in memory: it only asks Maps on cluster's own plan generator to make its plan again with another safe area. CarPlay on the system partition is not touched, nothing runs at boot. Takes effect at the next head-unit start. Removing it puts the default safe area back. The safe area is one for every CarPlay app, so the offset that suits Yandex may misplace Apple Maps or Waze. If the old cluster-yandex-safearea-fix tool is installed and cannot be removed because it lost its backup record, this tool leaves an empty record for it so the Store can remove it.",
+  "description": "Moves the CarPlay cluster-map safe area so Yandex Navigator puts the car in the middle of the instrument cluster. For Maps on cluster (waze-on-cluster) 0.11.0 and newer, where CarPlay is patched in memory: it only asks Maps on cluster's own plan generator to make its plan again with another safe area. CarPlay on the system partition is not touched. A minute after each head-unit start a short background check puts the zone back if Patch in the map app reset it. Takes effect at the next head-unit start. Removing it puts the default safe area back. The safe area is one for every CarPlay app, so the offset that suits Yandex may misplace Apple Maps or Waze. If the old cluster-yandex-safearea-fix tool is installed and cannot be removed because it lost its backup record, this tool leaves an empty record for it so the Store can remove it.",
   "requires": {
     "mgu-deploy": "0.8.0",
     "waze-on-cluster": "0.11.0"
   },
   "uninstallable": true,
-  "mguHmi": ["ID7"],
-  "activate": ["node", "zone.js", "activate"],
-  "deactivate": ["node", "zone.js", "deactivate"],
+  "mguHmi": [
+    "ID7"
+  ],
+  "activate": [
+    "node",
+    "zone.js",
+    "activate"
+  ],
+  "deactivate": [
+    "node",
+    "zone.js",
+    "deactivate"
+  ],
   "files": [
-    { "path": "zone.js", "mode": "0644" },
-    { "path": "zone.conf", "mode": "0644" },
-    { "path": "README.md", "mode": "0644" },
-    { "path": "LICENSE", "mode": "0644" }
-  ]
+    {
+      "path": "zone.js",
+      "mode": "0644"
+    },
+    {
+      "path": "zone.conf",
+      "mode": "0644"
+    },
+    {
+      "path": "README.md",
+      "mode": "0644"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "0644"
+    }
+  ],
+  "units": [
+    {
+      "name": "cebep-map-zone.service",
+      "from": "cebep-map-zone.service"
+    }
+  ],
+  "enable": [
+    {
+      "unit": "cebep-map-zone.service",
+      "target": "multi-user.target"
+    }
+  ],
+  "restart": []
 }

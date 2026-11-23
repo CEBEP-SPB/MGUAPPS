@@ -15,8 +15,10 @@
  *   zone.js activate     install / update: write the zone into the plan
  *   zone.js deactivate   removal: put the default zone back. Never blocks removal.
  *   zone.js status       show what the plan holds now (read-only)
+ *   zone.js ensure       the boot check: put the zone back when Patch reset it
  *
- * Nothing runs at boot. Takes effect at the next head-unit start.
+ * cebep-map-zone.service runs `ensure` once, a minute after each head-unit
+ * start, in the background. Takes effect at the next head-unit start.
  *
  * One exception to "nothing is written to the system partition": when the old
  * third-party tool cluster-yandex-safearea-fix is installed and has lost its
@@ -239,6 +241,7 @@ function activate() {
     helpOldFix();
     var want = wantedSafe();
     say('wanted zone ' + want.safe + ' (' + want.from + '), in the plan now: ' + (now.safe || 'default'));
+    clearEnsure();
     if (now.safe === want.safe) { finish({ status: 'zone ' + want.safe + ' is already in the map plan' }, 0); return; }
     var args = stripSafe(now.rec.args).concat(['--safe', want.safe]);
     replan(woc.inmem, args, function (err) {
@@ -251,10 +254,58 @@ function activate() {
     });
 }
 
+/* ---- the boot check -----------------------------------------------------------
+ * Patch in the Maps on cluster app makes a plan with the default zone. A minute
+ * after each head-unit start, cebep-map-zone.service runs `ensure`: when the
+ * plan works and its zone is not the wanted one, the same re-plan as `activate`
+ * is done, in the background. Nothing waits for it and it never blocks CarPlay;
+ * the zone it puts back takes effect at the next head-unit start.
+ *
+ * It only ever re-plans a plan Maps on cluster has enabled: a patch that was
+ * removed, or one boot recovery turned off, is left alone. It writes nothing
+ * outside /var/opt. Three failed attempts in a row for the same zone and it
+ * stops trying until the tool is installed again. It always exits 0. */
+var ENSURE_STATE = process.env.CEBEP_ENSURE_STATE || '/var/opt/cebep-map-zone/ensure.json';
+var ENSURE_TRIES = 3;
+function readEnsure() {
+    try { var o = JSON.parse(fs.readFileSync(ENSURE_STATE, 'utf8')); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; }
+}
+function writeEnsure(o) {
+    try { fs.writeFileSync(ENSURE_STATE + '.new', JSON.stringify(o) + '\n'); fs.renameSync(ENSURE_STATE + '.new', ENSURE_STATE); } catch (e) {}
+}
+function clearEnsure() { try { fs.unlinkSync(ENSURE_STATE); } catch (e) {} }
+
+function ensure() {
+    var woc = loadWoc();
+    if (woc.err) { say('boot check: ' + woc.err + ' - nothing to do'); process.exit(0); }
+    var now = inspect(woc.inmem);
+    if (now.err) { say('boot check: ' + now.err + ' - leaving the plan alone'); process.exit(0); }
+    var want = wantedSafe();
+    if (now.safe === want.safe) { clearEnsure(); say('boot check: zone ' + want.safe + ' is in the map plan'); process.exit(0); }
+    var st = readEnsure();
+    if (st.zone === want.safe && st.fails >= ENSURE_TRIES) {
+        say('boot check: zone ' + want.safe + ' could not be written ' + st.fails + ' times (' + (st.last || '?') + ') - not trying again; install the tool again to retry');
+        process.exit(0);
+    }
+    say('boot check: the plan has ' + (now.safe || 'the default zone') + ', putting ' + want.safe + ' (' + want.from + ') back');
+    replan(woc.inmem, stripSafe(now.rec.args).concat(['--safe', want.safe]), function (err) {
+        if (err) {
+            writeEnsure({ zone: want.safe, fails: (st.zone === want.safe ? (st.fails || 0) : 0) + 1, last: String(err.message).slice(0, 200) });
+            say('boot check: zone not written, the map plan is unchanged: ' + err.message);
+            process.exit(0);
+        }
+        clearEnsure();
+        resetRecovery();
+        say('boot check: zone ' + want.safe + ' is back in the map plan; it takes effect at the next head-unit start');
+        process.exit(0);
+    });
+}
+
 /* Removal: put the default zone back. Whatever happens it exits 0: a tool that
  * cannot be removed is worse than a leftover zone (Patch in the map app
  * resets it). */
 function deactivate() {
+    clearEnsure();
     var woc = loadWoc();
     if (woc.err) { finish({ status: 'nothing to restore: ' + woc.err }, 0); return; }
     var rec = null;
@@ -296,7 +347,8 @@ function main() {
     if (cmd === 'activate') activate();
     else if (cmd === 'deactivate') deactivate();
     else if (cmd === 'status') status();
-    else { process.stderr.write('usage: zone.js activate|deactivate|status\n'); process.exit(2); }
+    else if (cmd === 'ensure') ensure();
+    else { process.stderr.write('usage: zone.js activate|deactivate|status|ensure\n'); process.exit(2); }
 }
 if (require.main === module) main();
 else module.exports = { checkSafe: checkSafe, stripSafe: stripSafe, argOf: argOf };
