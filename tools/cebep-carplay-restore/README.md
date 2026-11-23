@@ -4,6 +4,10 @@ A one-time repair for [mgu Store](https://github.com/robertnisipeanu/mgu-store).
 `/usr/bin/carplay`** - read this page first. Used on a car on 2026-11-21: the file was restored,
 Patch worked again and the cluster map came back.
 
+> **Since Maps on cluster 0.14.7 (2026-11-23) this tool is rarely needed:** that version works with the
+> leftover zone in the file by itself. Update Maps on cluster and restart the head unit first. Use this
+> tool only where Maps on cluster cannot be updated.
+
 ## The one case it is for
 
 - Maps on cluster 0.11.0+ shows CarPlay **Failed** / **Changed by another tool**, its log says
