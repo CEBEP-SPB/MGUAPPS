@@ -1,7 +1,7 @@
 {
   "id": "cebep-map-zone",
   "kind": "tool",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "GPL-3.0-or-later",
   "title": "Yandex map fix (CEBEP)",
   "description": "AFTER INSTALL: RESTART THE HEAD UNIT ONCE. AFTER PRESSING PATCH IN MAPS ON CLUSTER: RESTART TWICE, A COUPLE OF MINUTES APART - THE ZONE COMES BACK BY ITSELF, DO NOT REINSTALL. Moves the CarPlay cluster-map safe area so Yandex Navigator puts the car in the middle of the instrument cluster. For Maps on cluster (waze-on-cluster) 0.11.0 and newer, where CarPlay is patched in memory: it only asks Maps on cluster's own plan generator to make its plan again with another safe area. CarPlay on the system partition is not touched. A minute after each head-unit start a short background check puts the zone back if Patch in the map app reset it. Takes effect at the next head-unit start. Removing it puts the default safe area back. The safe area is one for every CarPlay app, so the offset that suits Yandex may misplace Apple Maps or Waze. If the old cluster-yandex-safearea-fix tool is installed and cannot be removed because it lost its backup record, this tool leaves an empty record for it so the Store can remove it.",

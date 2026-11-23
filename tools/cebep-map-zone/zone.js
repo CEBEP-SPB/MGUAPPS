@@ -112,7 +112,14 @@ function inspect(inmem) {
     var panel = argOf(rec.args, '--panel');
     if (panel !== 'high') return { err: 'the map patch is in panel ' + (panel || '?') + ' mode: the zone exists only in panel high mode' };
     if (argOf(rec.args, '--res') === 'stock') return { err: 'the map patch uses the stock resolution (--res stock): there is no zone in this mode' };
-    return { rec: rec, safe: argOf(rec.args, '--safe') };
+    /* Stale: the record is enabled but no longer describes the CarPlay file (it
+     * was replaced or edited since the plan was made - seen after removing the
+     * old cluster-yandex-safearea-fix, which writes its zone back into the
+     * file). Maps on cluster then arms nothing at boot and shows "Not patched"
+     * until Patch is pressed. Its own test (inmem.current) decides. */
+    var stale = false;
+    try { stale = typeof inmem.current === 'function' && !inmem.current('carplay'); } catch (e) { stale = false; }
+    return { rec: rec, safe: argOf(rec.args, '--safe'), stale: stale };
 }
 
 /* The boot-recovery failure count belongs to the previous plan; the new one
@@ -241,7 +248,8 @@ function activate() {
     var want = wantedSafe();
     say('wanted zone ' + want.safe + ' (' + want.from + '), in the plan now: ' + (now.safe || 'default'));
     clearEnsure();
-    if (now.safe === want.safe) { finish({ status: 'zone ' + want.safe + ' is already in the map plan' }, 0); return; }
+    if (now.stale) say('the map plan was made for another CarPlay file than the one on the unit now - planning again');
+    if (now.safe === want.safe && !now.stale) { finish({ status: 'zone ' + want.safe + ' is already in the map plan' }, 0); return; }
     var args = stripSafe(now.rec.args).concat(['--safe', want.safe]);
     replan(woc.inmem, args, function (err) {
         /* On failure Maps on cluster's previous plan stays as it was: the
@@ -259,6 +267,10 @@ function activate() {
  * plan works and its zone is not the wanted one, the same re-plan as `activate`
  * is done, in the background. Nothing waits for it and it never blocks CarPlay;
  * the zone it puts back takes effect at the next head-unit start.
+ *
+ * The same re-plan is done when the plan is enabled but was made for another
+ * CarPlay file than the one on the unit now (see inspect): what the Patch
+ * button would do, with the wanted zone, so the button is not needed.
  *
  * It only ever re-plans a plan Maps on cluster has enabled: a patch that was
  * removed, or one boot recovery turned off, is left alone. It writes nothing
@@ -280,22 +292,33 @@ function ensure() {
     var now = inspect(woc.inmem);
     if (now.err) { say('boot check: ' + now.err + ' - leaving the plan alone'); process.exit(0); }
     var want = wantedSafe();
-    if (now.safe === want.safe) { clearEnsure(); say('boot check: zone ' + want.safe + ' is in the map plan'); process.exit(0); }
+    if (now.safe === want.safe && !now.stale) { clearEnsure(); say('boot check: zone ' + want.safe + ' is in the map plan'); process.exit(0); }
     var st = readEnsure();
     if (st.zone === want.safe && st.fails >= ENSURE_TRIES) {
         say('boot check: zone ' + want.safe + ' could not be written ' + st.fails + ' times (' + (st.last || '?') + ') - not trying again; install the tool again to retry');
         process.exit(0);
     }
-    say('boot check: the plan has ' + (now.safe || 'the default zone') + ', putting ' + want.safe + ' (' + want.from + ') back');
+    say(now.stale ? 'boot check: the map plan was made for another CarPlay file than the one on the unit now (Maps on cluster shows Not patched) - planning again with zone ' + want.safe
+                  : 'boot check: the plan has ' + (now.safe || 'the default zone') + ', putting ' + want.safe + ' (' + want.from + ') back');
     replan(woc.inmem, stripSafe(now.rec.args).concat(['--safe', want.safe]), function (err) {
         if (err) {
             writeEnsure({ zone: want.safe, fails: (st.zone === want.safe ? (st.fails || 0) : 0) + 1, last: String(err.message).slice(0, 200) });
             say('boot check: zone not written, the map plan is unchanged: ' + err.message);
             process.exit(0);
         }
+        /* A plan that still does not fit right after it was made would be made
+         * again at every start: count it as a failure, so it stops after three. */
+        var fits = true;
+        try { fits = !now.stale || typeof woc.inmem.current !== 'function' || !!woc.inmem.current('carplay'); } catch (e) { fits = true; }
+        if (!fits) {
+            writeEnsure({ zone: want.safe, fails: (st.zone === want.safe ? (st.fails || 0) : 0) + 1, last: 'the new plan does not fit the CarPlay file either' });
+            say('boot check: planned again, but Maps on cluster still does not take the plan for this CarPlay file - press Patch in its app');
+            process.exit(0);
+        }
         clearEnsure();
         resetRecovery();
-        say('boot check: zone ' + want.safe + ' is back in the map plan; it takes effect at the next head-unit start');
+        say(now.stale ? 'boot check: the map plan is made again for this CarPlay file, with zone ' + want.safe + '; the map is patched from the next head-unit start'
+                      : 'boot check: zone ' + want.safe + ' is back in the map plan; it takes effect at the next head-unit start');
         process.exit(0);
     });
 }
@@ -337,6 +360,7 @@ function status() {
         (rec.trial ? ', on trial' : rec.proven ? ', proven' : ''));
     say('plan arguments: ' + (Array.isArray(rec.args) ? rec.args.join(' ') : '?'));
     say('zone in the plan: ' + ((Array.isArray(rec.args) && argOf(rec.args, '--safe')) || 'default'));
+    try { if (typeof woc.inmem.current === 'function') say('plan matches the CarPlay file on the unit: ' + (woc.inmem.current('carplay') ? 'yes' : 'NO - Maps on cluster arms nothing until it is planned again (the boot check does that)')); } catch (e) {}
     say('old cluster-yandex-safearea-fix: ' + (!oldFixInstalled() ? 'not installed' : 'installed, backup record ' + (fs.existsSync(OLD_BACKUP) ? 'present' : 'missing') + ' - remove it in the Store'));
     process.exit(0);
 }

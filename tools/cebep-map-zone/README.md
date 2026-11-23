@@ -61,6 +61,11 @@ then reinstall the tool in the Store and restart the head unit.
 - A patch you removed with **Remove patch**, or one Maps on cluster turned off by itself, is left alone:
   the check never turns a patch on.
 
+Since 0.4.0 the same check also notices a plan that no longer fits the CarPlay file - what happens
+after the old `cluster-yandex-safearea-fix` is removed, when Maps on cluster shows **Not patched** - and
+makes the plan again by itself, with your zone. Pressing Patch is then not needed: restart, wait a
+couple of minutes, restart.
+
 To go back to the default zone for good, remove this tool.
 
 The check writes nothing outside `/var/opt`, never blocks CarPlay's start, and gives up after three
