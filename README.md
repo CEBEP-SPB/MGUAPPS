@@ -50,6 +50,8 @@ Happens on cars where the old `cluster-yandex-safearea-fix` was installed: it le
 
 `tools/cebep-carplay-check` (read-only diagnostic) and `tools/cebep-carplay-restore` (one-time repair of the CarPlay file after the old fix) are kept in the repository but not listed in the Store: Maps on cluster 0.14.7+ handles that case by itself. They are for use over SSH on a car where the map tool cannot be updated.
 
+The Store shows the tool's description in Russian on head units set to Russian (the `texts.ru` entry in `mgu-repo.json`) and in English everywhere else. The tool's own messages are English.
+
 ## Disclaimer
 
 Everything here is unofficial, not affiliated with BMW. Use at your own risk. Open source, GPL-3.0-or-later.
