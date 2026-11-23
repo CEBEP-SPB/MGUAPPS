@@ -230,7 +230,7 @@ function activate() {
         if (leftoverZone()) {
             finish({ status: 'zone not written: the CarPlay file still holds the map zone of the old cluster-yandex-safearea-fix, so Maps on cluster cannot patch. ' +
                 (oldFixInstalled() ? 'Remove the old cluster-yandex-safearea-fix in the Store. ' : '') +
-                'Update Maps on cluster to 0.14.7 or newer and restart the head unit: it handles this by itself. Then install this tool again' }, 1);
+                'Update Maps on cluster to 0.14.7 or newer, press Patch on the CarPlay tab of its app and restart the head unit. Then install this tool again' }, 1);
             return;
         }
         finish({ status: 'zone not written: ' + now.err + hint }, 1); return;
@@ -329,7 +329,7 @@ function deactivate() {
 function status() {
     var woc = loadWoc();
     if (woc.err) { say(woc.err); process.exit(0); }
-    if (leftoverZone()) say('CarPlay file: still holds the old fix\'s map zone - update Maps on cluster to 0.14.7 or newer');
+    if (leftoverZone()) say('CarPlay file: still holds the old fix\'s map zone - with Maps on cluster 0.14.7 or newer press Patch in its app if the map is gone');
     var rec = woc.inmem.readRecord('carplay'), want = wantedSafe();
     say('wanted zone: ' + want.safe + ' (' + want.from + ')');
     if (!rec) { say('no CarPlay patch plan'); process.exit(0); }
