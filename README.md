@@ -44,11 +44,10 @@ The old fix does nothing with Maps on cluster 0.11.0+ and should be removed. **R
 
 1. In the Store remove the tool `cluster-yandex-safearea-fix` itself (in the installed list). Removing only its source does not remove the tool.
 2. Restart the head unit.
-3. Open Maps on cluster - CarPlay. If the status is not Patched, press **Patch**.
-4. Restart: the phone's map is back on the cluster, with the default zone (Yandex left of centre).
-5. Wait a couple of minutes, restart again: Yandex map fix has put its zone back, Yandex is in the middle. After this restart the map may take about a minute to appear.
+3. Wait a couple of minutes: Yandex map fix 0.4.0+ sees that the plan no longer fits the CarPlay file and makes it again with its zone. (Without the fix, or with an older one: open Maps on cluster - CarPlay and press **Patch**, restart, wait, restart.)
+4. Restart again: the phone's map is back on the cluster, Yandex in the middle. After this restart the map may take about a minute to appear.
 
-Checked on a car on 2026-11-23 with Maps on cluster 0.14.10 and Yandex map fix 0.3.1.
+The Patch-button way was checked on a car on 2026-11-23 (Maps on cluster 0.14.10, Yandex map fix 0.3.1). The automatic re-plan of 0.4.0 is bench-tested and not yet run on a car.
 
 `tools/cebep-carplay-check` (read-only diagnostic) and `tools/cebep-carplay-restore` (one-time repair of the CarPlay file after the old fix) are kept in the repository but not listed in the Store: Maps on cluster 0.14.7+ handles that case by itself. They are for use over SSH on a car where the map tool cannot be updated.
 
