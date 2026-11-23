@@ -38,15 +38,17 @@ Good to know:
 
 Details, your own zone and checks are in the [tool description](tools/cebep-map-zone/README.md).
 
-### Map gone after updating Maps on cluster (CarPlay: Failed / Changed by another tool)
+### The old cluster-yandex-safearea-fix: how to remove it without losing the map
 
-Happens on cars where the old `cluster-yandex-safearea-fix` was installed: it left its map zone in the CarPlay file.
+The old fix does nothing with Maps on cluster 0.11.0+ and should be removed. **Removing it can leave its own map zone in the CarPlay file**; Maps on cluster then shows CarPlay as **Not patched** (older versions: Failed / Changed by another tool) and the cluster shows BMW's own map instead of the phone's. Seen on two cars. The way through, with Maps on cluster 0.14.7 or newer:
 
-1. Remove the old `cluster-yandex-safearea-fix` in the Store.
-2. Update **Maps on cluster to 0.14.7 or newer** and restart the head unit. Since that version it handles the leftover by itself, the map comes back.
-3. Install **Yandex map fix (CEBEP)**, restart.
+1. In the Store remove the tool `cluster-yandex-safearea-fix` itself (in the installed list). Removing only its source does not remove the tool.
+2. Restart the head unit.
+3. Open Maps on cluster - CarPlay. If the status is not Patched, press **Patch**.
+4. Restart: the phone's map is back on the cluster, with the default zone (Yandex left of centre).
+5. Wait a couple of minutes, restart again: Yandex map fix has put its zone back, Yandex is in the middle. After this restart the map may take about a minute to appear.
 
-**Status (2026-11-23):** Yandex map fix - working on a car with Maps on cluster 0.14.9, including the zone coming back by itself after Patch (two restarts).
+Checked on a car on 2026-11-23 with Maps on cluster 0.14.10 and Yandex map fix 0.3.1.
 
 `tools/cebep-carplay-check` (read-only diagnostic) and `tools/cebep-carplay-restore` (one-time repair of the CarPlay file after the old fix) are kept in the repository but not listed in the Store: Maps on cluster 0.14.7+ handles that case by itself. They are for use over SSH on a car where the map tool cannot be updated.
 
