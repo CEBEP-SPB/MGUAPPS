@@ -47,7 +47,7 @@ Happens on cars where the old `cluster-yandex-safearea-fix` was installed: it le
 
 Only where Maps on cluster cannot be updated: install **CarPlay file repair (CEBEP)** after step 1, restart, press Patch in Maps on cluster, restart. It refuses with the reason and changes nothing if the car is not in that state.
 
-**Status (2026-11-23):** Yandex map fix 0.2.x - working on cars. 0.3.0 adds the background check that puts the zone back after Patch: bench-tested against Maps on cluster 0.14.9, not yet run on a car. CarPlay file repair - worked on a car on 2026-11-21; since Maps on cluster 0.14.7 it is needed only where the map tool cannot be updated.
+**Status (2026-11-23):** Yandex map fix 0.3.0 - working on a car with Maps on cluster 0.14.9, including the zone coming back by itself after Patch (two restarts). CarPlay file repair - worked on a car on 2026-11-21; since Maps on cluster 0.14.7 it is needed only where the map tool cannot be updated.
 
 `tools/cebep-carplay-check` is a read-only diagnostic kept in the repository but not listed in the Store: over SSH, `node check.js status` tells which bytes of the CarPlay file differ from the shipped build.
 
