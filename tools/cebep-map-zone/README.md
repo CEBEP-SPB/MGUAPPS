@@ -4,6 +4,7 @@
 > **After install: restart the head unit once.**
 > **After pressing Patch in Maps on cluster: restart TWICE, a couple of minutes apart.**
 > The zone comes back by itself. Do not reinstall the tool.
+> **Maps on cluster will show CarPlay as "Update needed". That is normal with this tool: do not press Patch.**
 
 A tool for [mgu Store](https://github.com/robertnisipeanu/mgu-store), an add-on to
 **Maps on cluster** (waze-on-cluster, `robertnisipeanu/idrive-apps`) **0.11.0 and newer**.
