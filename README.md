@@ -21,6 +21,8 @@ and pick the **Branch** channel (branch `main`). The head unit needs internet.
 ### Yandex map fix
 
 > **After install: restart the head unit once. After pressing Patch in Maps on cluster: restart TWICE, a couple of minutes apart - the zone comes back by itself, do not reinstall.**
+>
+> **Maps on cluster will show CarPlay as "Update needed". That is normal with this tool: do not press Patch.**
 
 For cars where the cluster map already works through **Maps on cluster** (`robertnisipeanu/idrive-apps`) 0.11.0 or newer, and Yandex Navigator sits left of the centre.
 
