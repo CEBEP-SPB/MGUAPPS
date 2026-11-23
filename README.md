@@ -17,13 +17,14 @@ and pick the **Branch** channel (branch `main`). The head unit needs internet.
 | Tool | What it does | Needs |
 |---|---|---|
 | [Yandex map fix](tools/cebep-map-zone) | Puts Yandex Navigator in the middle of the instrument cluster by moving the CarPlay map zone | Maps on cluster 0.11.0+ |
-| [CarPlay file repair](tools/cebep-carplay-restore) | One-time repair after the old Yandex fix: puts the shipped safe-area bytes back into the CarPlay file, only when the result is the shipped file by SHA-256 | Maps on cluster 0.11.0+, CarPlay 22.28.3 |
 
 ### Yandex map fix
 
+> **After install: restart the head unit once. After pressing Patch in Maps on cluster: restart TWICE, a couple of minutes apart - the zone comes back by itself, do not reinstall.**
+
 For cars where the cluster map already works through **Maps on cluster** (`robertnisipeanu/idrive-apps`) 0.11.0 or newer, and Yandex Navigator sits left of the centre.
 
-1. **Patch** was pressed on the CarPlay tab of the Maps on cluster app, the map shows on the cluster.
+1. The map shows on the cluster (Maps on cluster 0.14.2+ patches CarPlay by itself; on older versions press **Patch** on the CarPlay tab of its app).
 2. Install the tool from this source.
 3. Restart the head unit.
 
@@ -45,11 +46,9 @@ Happens on cars where the old `cluster-yandex-safearea-fix` was installed: it le
 2. Update **Maps on cluster to 0.14.7 or newer** and restart the head unit. Since that version it handles the leftover by itself, the map comes back.
 3. Install **Yandex map fix (CEBEP)**, restart.
 
-Only where Maps on cluster cannot be updated: install **CarPlay file repair (CEBEP)** after step 1, restart, press Patch in Maps on cluster, restart. It refuses with the reason and changes nothing if the car is not in that state.
+**Status (2026-11-23):** Yandex map fix - working on a car with Maps on cluster 0.14.9, including the zone coming back by itself after Patch (two restarts).
 
-**Status (2026-11-23):** Yandex map fix 0.3.0 - working on a car with Maps on cluster 0.14.9, including the zone coming back by itself after Patch (two restarts). CarPlay file repair - worked on a car on 2026-11-21; since Maps on cluster 0.14.7 it is needed only where the map tool cannot be updated.
-
-`tools/cebep-carplay-check` is a read-only diagnostic kept in the repository but not listed in the Store: over SSH, `node check.js status` tells which bytes of the CarPlay file differ from the shipped build.
+`tools/cebep-carplay-check` (read-only diagnostic) and `tools/cebep-carplay-restore` (one-time repair of the CarPlay file after the old fix) are kept in the repository but not listed in the Store: Maps on cluster 0.14.7+ handles that case by itself. They are for use over SSH on a car where the map tool cannot be updated.
 
 ## Disclaimer
 

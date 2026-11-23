@@ -1,5 +1,10 @@
 # cebep-map-zone - cluster map zone for Yandex Navigator
 
+> ## RESTARTS
+> **After install: restart the head unit once.**
+> **After pressing Patch in Maps on cluster: restart TWICE, a couple of minutes apart.**
+> The zone comes back by itself. Do not reinstall the tool.
+
 A tool for [mgu Store](https://github.com/robertnisipeanu/mgu-store), an add-on to
 **Maps on cluster** (waze-on-cluster, `robertnisipeanu/idrive-apps`) **0.11.0 and newer**.
 
@@ -79,8 +84,7 @@ normal way, and its own removal deletes the record.
 If the map is gone after updating Maps on cluster to 0.11.0 (CarPlay **Failed** in its app): the old
 fix left its map zone in the CarPlay file. This tool sees that (it only reads the file) and says so:
 update Maps on cluster to **0.14.7 or newer** and restart - since that version it handles the leftover
-by itself. Only if it cannot be updated: install **CarPlay file repair (CEBEP)** from this source,
-restart, press Patch, restart. Then install this tool again.
+by itself. Then install this tool again.
 
 If the Maps on cluster app shows CarPlay as **changed by another tool** and this tool
 refuses with `no CarPlay patch plan`: carplay on disk still carries the old fix's edit.
