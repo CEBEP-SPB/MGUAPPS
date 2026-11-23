@@ -1,0 +1,19 @@
+[Unit]
+Description=cebep-map-zone: put the Yandex map zone back into the Maps on cluster plan when Patch reset it
+RequiresMountsFor=/var/opt
+After=local-fs.target waze-on-cluster-boot.service waze-on-cluster-patchd.service
+
+[Service]
+# Not a oneshot on purpose: nothing waits for it, the head unit's start does not depend on it.
+Type=simple
+# Stays "active (exited)" after the check, so a health check of the tool's units sees it as running.
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'sleep 60; exec /usr/bin/node /var/opt/cebep-map-zone/current/zone.js ensure'
+Nice=10
+KillMode=mixed
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -21,7 +21,7 @@ generator, which has a regular `--safe` option. This tool does one thing: it ask
 that generator to make the plan again with the same arguments plus `--safe <zone>`.
 
 - `/usr/bin/carplay` is not modified;
-- nothing runs at boot, there are no services;
+- one short background check a minute after each head-unit start (see "What resets the zone"); nothing waits for it;
 - every check (CarPlay build, coding, edit sites) stays with Maps on cluster;
 - Maps on cluster puts the new plan on trial itself and disables it if CarPlay crashes with it.
 
@@ -48,12 +48,20 @@ then reinstall the tool in the Store and restart the head unit.
 
 ## What resets the zone
 
-- the **Patch** button in the Maps on cluster app - it makes a plan with the default zone.
-  To get yours back: reinstall this tool in the Store, restart;
-- a Maps on cluster update keeps the zone (it remakes the plan with the same arguments).
+- The **Patch** button in the Maps on cluster app makes a plan with the default zone. Since 0.3.0 this
+  tool puts its zone back by itself: a minute after the next head-unit start a background check sees the
+  default zone and writes yours again. So after pressing Patch: restart twice (the first start applies
+  the map patch and the check runs, the second start has your zone). Nothing to reinstall.
+- A Maps on cluster update keeps the zone.
+- A patch you removed with **Remove patch**, or one Maps on cluster turned off by itself, is left alone:
+  the check never turns a patch on.
 
-The Maps on cluster app will show that the zone differs from the default and offer
-Patch - that is expected.
+To go back to the default zone for good, remove this tool.
+
+The check writes nothing outside `/var/opt`, never blocks CarPlay's start, and gives up after three
+failed attempts in a row (install the tool again to retry). Its output: `journalctl -u cebep-map-zone`.
+
+The Maps on cluster app will show that the zone differs from the default and offer Patch - that is expected.
 
 ## The old cluster-yandex-safearea-fix
 
