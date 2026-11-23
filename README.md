@@ -37,19 +37,17 @@ Good to know:
 
 Details, your own zone and checks are in the [tool description](tools/cebep-map-zone/README.md).
 
-### Map gone after updating Maps on cluster to 0.11.0
+### Map gone after updating Maps on cluster (CarPlay: Failed / Changed by another tool)
 
-If the old `cluster-yandex-safearea-fix` was ever installed, Maps on cluster 0.11.0 may show CarPlay as
-**Failed** or **Changed by another tool**, and Patch does not help. The way out, all from this source:
+Happens on cars where the old `cluster-yandex-safearea-fix` was installed: it left its map zone in the CarPlay file.
 
 1. Remove the old `cluster-yandex-safearea-fix` in the Store.
-2. Install **CarPlay file repair (CEBEP)**, restart the head unit. If this is not that case, it refuses with the reason and changes nothing.
-3. Maps on cluster - CarPlay - **Patch**, restart. The map is back.
-4. Install **Yandex map fix (CEBEP)**, restart. Remove CarPlay file repair.
+2. Update **Maps on cluster to 0.14.7 or newer** and restart the head unit. Since that version it handles the leftover by itself, the map comes back.
+3. Install **Yandex map fix (CEBEP)**, restart.
 
-Yandex map fix itself tells when this is needed: instead of installing, it names CarPlay file repair.
+Only where Maps on cluster cannot be updated: install **CarPlay file repair (CEBEP)** after step 1, restart, press Patch in Maps on cluster, restart. It refuses with the reason and changes nothing if the car is not in that state.
 
-**Status (2026-11-21), both run on cars:** Yandex map fix - working. CarPlay file repair - used on a car where the old `cluster-yandex-safearea-fix` had left its zone in the CarPlay file: the shipped file was restored, Patch worked again, the cluster map came back.
+**Status (2026-11-23):** Yandex map fix - working on cars; bench-tested against Maps on cluster 0.14.9. CarPlay file repair - worked on a car on 2026-11-21; since Maps on cluster 0.14.7 it is needed only where the map tool cannot be updated.
 
 `tools/cebep-carplay-check` is a read-only diagnostic kept in the repository but not listed in the Store: over SSH, `node check.js status` tells which bytes of the CarPlay file differ from the shipped build.
 

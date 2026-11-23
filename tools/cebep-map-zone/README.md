@@ -27,7 +27,7 @@ that generator to make the plan again with the same arguments plus `--safe <zone
 
 ## Install
 
-1. Maps on cluster 0.11.0+ is installed, **Patch** was pressed on the CarPlay tab of its app, the map shows on the cluster.
+1. Maps on cluster 0.11.0+ is installed and the map shows on the cluster (before 0.14.2 press **Patch** on the CarPlay tab of its app; newer versions patch by themselves).
 2. Add this repository as a source in the Store, channel: Branch.
 3. Install **Yandex map fix**. Restart the head unit.
 
@@ -70,8 +70,9 @@ normal way, and its own removal deletes the record.
 
 If the map is gone after updating Maps on cluster to 0.11.0 (CarPlay **Failed** in its app): the old
 fix left its map zone in the CarPlay file. This tool sees that (it only reads the file) and says so:
-install **CarPlay file repair (CEBEP)** from this source, restart, press Patch, restart, install this
-tool again.
+update Maps on cluster to **0.14.7 or newer** and restart - since that version it handles the leftover
+by itself. Only if it cannot be updated: install **CarPlay file repair (CEBEP)** from this source,
+restart, press Patch, restart. Then install this tool again.
 
 If the Maps on cluster app shows CarPlay as **changed by another tool** and this tool
 refuses with `no CarPlay patch plan`: carplay on disk still carries the old fix's edit.
