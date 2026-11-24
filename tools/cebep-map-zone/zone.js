@@ -17,6 +17,12 @@
  *   zone.js status       show what the plan holds now (read-only)
  *   zone.js ensure       the boot check: put the zone back when Patch reset it
  *
+ * The zone depends on the car: the same cluster shows the map frame at another
+ * place on a 3 Series than on an X4. The body comes from the head unit's own
+ * coding image (/dev/shm/rawcodingdata, CAFD HU_MGU 3002 BAUREIHE - the image
+ * Maps on cluster reads the cluster variant from; read-only here), and
+ * zone.conf lists the zone of each body. See bodyOf().
+ *
  * cebep-map-zone.service runs `ensure` once, a minute after each head-unit
  * start, in the background. Takes effect at the next head-unit start.
  *
@@ -64,8 +70,53 @@ function confSafe(file) {
     return found;
 }
 
-/* Which zone to set and where it came from. A bad line in the local file does
- * not fail silently: it is reported and the next source is used. */
+/* The car's body from the head unit's coding image, the one CodingShmApp
+ * publishes and Maps on cluster reads KI_KOMBI_VARIANT from: flags at 0x28
+ * (both of 0x09 set once the coding is there), payload from 0x2c; CAFD HU_MGU
+ * block 3002 starts 0x12d into the payload and its byte 0x1b is BAUREIHE.
+ * Checked against E-Sys on a G06 (0x24). Read-only.
+ * -> { code, name } or { err }. An unknown code has name ''. */
+var CODING = process.env.CEBEP_CODING || '/dev/shm/rawcodingdata';
+var BODY_OFF = 0x2c + 0x12d + 0x1b;
+var BODY = {
+    0x05: 'G01LCI', 0x08: 'G02LCI', 0x09: 'G08LCI', 0x13: 'G08BEV', 0x18: 'G08BEVLCI', 0x20: 'G26BEV', 0x21: 'G11',
+    0x22: 'G12', 0x23: 'G05', 0x24: 'G06', 0x25: 'G07', 0x26: 'G14', 0x27: 'G15', 0x28: 'G16', 0x29: 'G07LCI',
+    0x2a: 'G20', 0x2b: 'G21', 0x2c: 'G22', 0x2d: 'G23', 0x2e: 'G24', 0x2f: 'G26', 0x30: 'G30', 0x31: 'G31',
+    0x32: 'G38', 0x33: 'G32', 0x34: 'G30LCI', 0x35: 'G31LCI', 0x36: 'G32LCI', 0x37: 'G38LCI', 0x38: 'F90LCI',
+    0x39: 'F97LCI', 0x3a: 'G28', 0x3b: 'G29', 0x3c: 'J29', 0x3d: 'F98LCI', 0x3e: 'G82', 0x47: 'G09', 0x48: 'G18',
+    0x49: 'G20LCI', 0x4a: 'G83', 0x50: 'G21LCI', 0x51: 'G28BEV', 0x53: 'G28LCI', 0x58: 'G81', 0x59: 'G87',
+    0x5b: 'F95', 0x5c: 'F96', 0x5d: 'G80', 0x65: 'G01', 0x66: 'G02', 0x67: 'G08', 0x6a: 'F93', 0x7b: 'G42',
+    0x88: 'F97', 0x89: 'F98'
+};
+function bodyOf() {
+    var buf;
+    try { buf = fs.readFileSync(CODING); } catch (e) { return { err: 'the head unit coding cannot be read (' + (e.code || e.message) + ')' }; }
+    if (buf.length <= BODY_OFF) return { err: 'the head unit coding image is too short (' + buf.length + ' bytes)' };
+    if ((buf[0x28] & 0x09) !== 0x09) return { err: 'the head unit coding is not published yet' };
+    var code = buf[BODY_OFF];
+    return { code: code, name: BODY[code] || '' };
+}
+function hex(n) { return '0x' + (n < 16 ? '0' : '') + n.toString(16); }
+
+/* The zone zone.conf lists for a body: a line  safe[G20 G21 ...]=WxH+X+Y. */
+function bodySafe(name) {
+    if (!name) return null;
+    var text;
+    try { text = fs.readFileSync(SHIPPED_CONF, 'utf8'); } catch (e) { return null; }
+    var lines = text.split('\n'), found = null;
+    for (var i = 0; i < lines.length; i++) {
+        var m = /^\s*safe\[([A-Za-z0-9 ,]+)\]\s*=\s*(\S+)\s*$/.exec(lines[i]);
+        if (m && m[1].split(/[ ,]+/).indexOf(name) >= 0) found = m[2];
+    }
+    return checkSafe(found);
+}
+
+/* Which zone to set and where it came from: the owner's own zone, else the
+ * zone of this car's body, else the common one. A bad line in the local file
+ * does not fail silently: it is reported and the next source is used.
+ * `unsure` is set when the body could not be read and nothing else decided the
+ * zone: the boot check then leaves the plan alone instead of writing the
+ * common zone over a body's own one. */
 function wantedSafe() {
     var local = confSafe(LOCAL_CONF);
     if (local !== null) {
@@ -73,9 +124,14 @@ function wantedSafe() {
         if (okLocal) return { safe: okLocal, from: LOCAL_CONF };
         say('zone "' + local + '" in ' + LOCAL_CONF + ' is not valid (need WxH+X+Y inside ' + FRAME.w + 'x' + FRAME.h + ') - using the shipped zone');
     }
+    var body = bodyOf(), tag = body.err ? 'body unknown: ' + body.err : body.name ? 'body ' + body.name : 'body code ' + hex(body.code) + ' is not in the list';
+    var own = body.err ? null : bodySafe(body.name);
+    if (own) return { safe: own, from: 'zone.conf, ' + tag, body: body };
     var shipped = checkSafe(confSafe(SHIPPED_CONF));
-    if (shipped) return { safe: shipped, from: 'zone.conf' };
-    return { safe: DEFAULT_SAFE, from: 'built-in' };
+    var out = shipped ? { safe: shipped, from: 'zone.conf, common zone, ' + tag } : { safe: DEFAULT_SAFE, from: 'built-in, ' + tag };
+    out.body = body;
+    if (body.err) out.unsure = true;
+    return out;
 }
 
 /* The plan arguments without --safe and its value. */
@@ -292,7 +348,8 @@ function ensure() {
     var now = inspect(woc.inmem);
     if (now.err) { say('boot check: ' + now.err + ' - leaving the plan alone'); process.exit(0); }
     var want = wantedSafe();
-    if (now.safe === want.safe && !now.stale) { clearEnsure(); say('boot check: zone ' + want.safe + ' is in the map plan'); process.exit(0); }
+    if (want.unsure && !now.stale) { say('boot check: ' + want.body.err + ' - leaving the plan alone at this start (it has ' + (now.safe || 'the default zone') + ')'); process.exit(0); }
+    if (now.safe === want.safe && !now.stale) { clearEnsure(); say('boot check: zone ' + want.safe + ' is in the map plan (' + want.from + ')'); process.exit(0); }
     var st = readEnsure();
     if (st.zone === want.safe && st.fails >= ENSURE_TRIES) {
         say('boot check: zone ' + want.safe + ' could not be written ' + st.fails + ' times (' + (st.last || '?') + ') - not trying again; install the tool again to retry');
@@ -355,6 +412,7 @@ function status() {
     if (leftoverZone()) say('CarPlay file: still holds the old fix\'s map zone - with Maps on cluster 0.14.7 or newer press Patch in its app if the map is gone');
     var rec = woc.inmem.readRecord('carplay'), want = wantedSafe();
     say('wanted zone: ' + want.safe + ' (' + want.from + ')');
+    if (want.body && !want.body.err) say('body by the head unit coding: ' + (want.body.name || '?') + ' (BAUREIHE ' + hex(want.body.code) + ')');
     if (!rec) { say('no CarPlay patch plan'); process.exit(0); }
     say('plan: ' + (rec.needsPlan ? 'not made (' + (rec.error || '?') + ')' : rec.enabled === true ? 'enabled' : 'disabled' + (rec.by ? ' (' + rec.by + ')' : '')) +
         (rec.trial ? ', on trial' : rec.proven ? ', proven' : ''));
