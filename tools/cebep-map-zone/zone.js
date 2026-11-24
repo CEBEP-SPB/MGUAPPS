@@ -42,7 +42,7 @@ var fs = require('fs');
 var path = require('path');
 
 var WOC = process.env.CEBEP_WOC_DIR || '/var/opt/waze-on-cluster/current';
-var SHIPPED_CONF = path.join(__dirname, 'zone.conf');
+var SHIPPED_CONF = process.env.CEBEP_ZONE_CONF || path.join(__dirname, 'zone.conf');
 var LOCAL_CONF = process.env.CEBEP_ZONE_LOCAL || '/var/opt/cebep-map-zone/zone.local.conf';
 var FRAME = { w: 1088, h: 480 };
 var DEFAULT_SAFE = '504x368+456+72';

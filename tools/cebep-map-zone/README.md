@@ -44,17 +44,14 @@ patched, patch disabled, `panel mid` mode) - it never stays "installed but not w
 
 The zone is `WxH+X+Y` inside the 1088x480 frame. Car left of centre - make X bigger.
 
-Since 0.5.0 the zone is picked by the car body. The cluster is the same part on these cars, but it
-shows the map frame at another place on a 3 Series than on an X4, so one zone does not centre the
-car everywhere. The body is read from the head unit's own coding image (`/dev/shm/rawcodingdata`,
-CAFD HU_MGU 3002 `BAUREIHE`; read-only, checked against E-Sys on a G06). `zone.conf` lists the zones:
+Since 0.5.0 the zone can be picked by the car body. The body is read from the head unit's own coding image (`/dev/shm/rawcodingdata`,
+CAFD HU_MGU 3002 `BAUREIHE`; read-only, checked against E-Sys on a G06, and read as G20 on a G20).
 
-| Body | Zone | Status |
-|---|---|---|
-| G02, G06 | `504x368+456+72` | seen centred on the cars |
-| G01, G05, G07 and every body not listed | `504x368+456+72` | same dashboards / the common zone |
-| G20, G21, G22, G23, G26, G28, G80-G83 | `504x368+388+72` | measured by one owner on a G20; not yet seen in the workshop |
-| G14, G15, G16, F93 | `504x368+410+72` | estimated from photos of a G15; to be confirmed |
+No body has its own zone now. 0.5.0 shipped `504x368+388+72` for the 3 / 4 Series and `504x368+410+72`
+for the 8 Series; on a G20 in the workshop (2026-11-24) 388 put the car about 10 mm left of centre, while
+456 is within a couple of mm there and on a G02. Other cars of the same bodies show the car right of
+centre at 456, so the body is not what decides it. 0.5.1 puts every body back on `504x368+456+72`.
+The mechanism stays: a line `safe[G20 G21]=WxH+X+Y` in `zone.conf` gives those bodies their own zone.
 
 Your own zone in `zone.local.conf` wins over the body. `zone.js status` prints the body it read.
 When the coding cannot be read at a start, the boot check leaves the plan as it is.
