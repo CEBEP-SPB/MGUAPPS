@@ -2,6 +2,10 @@
 
 Add-ons for [mgu Store](https://github.com/robertnisipeanu/mgu-store) on BMW MGU head units (iDrive 7).
 
+**The zone is tuned for the latest Yandex Navigator.** Yandex Maps and old Navigator versions may put the
+car a few millimetres off centre with the same zone; update Navigator first. Checked 2026-11-24 on a G20
+and a G02 with the current Navigator: the car is centred (Yandex map fix 0.5.1, zone 504x368+456+72).
+
 ## How to add it in the car
 
 In the Store app on the head unit: **Sources -> add**, type
