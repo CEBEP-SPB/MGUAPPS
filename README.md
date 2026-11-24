@@ -2,6 +2,12 @@
 
 Add-ons for [mgu Store](https://github.com/robertnisipeanu/mgu-store) on BMW MGU head units (iDrive 7).
 
+**Where the car stands depends on the phone too.** With the same zone and the same Yandex Navigator version
+some iPhones put the car up to 2 cm right of centre, with or without route guidance; others are exactly
+centred. The tool cannot see or change that. Checked 2026-11-24 with one iPhone on a G02, a G20 and a G05:
+centred on all three (Yandex map fix 0.5.1, zone 504x368+456+72). A car can get its own zone in
+`/var/opt/cebep-map-zone/zone.local.conf` (see the tool's README).
+
 ## How to add it in the car
 
 In the Store app on the head unit: **Sources -> add**, type
