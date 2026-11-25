@@ -1,7 +1,7 @@
 {
   "id": "cebep-map-zone",
   "kind": "tool",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "license": "GPL-3.0-or-later",
   "title": "Yandex map fix (CEBEP)",
   "description": "AFTER INSTALL: RESTART THE HEAD UNIT ONCE. AFTER PRESSING PATCH IN MAPS ON CLUSTER: RESTART TWICE, A COUPLE OF MINUTES APART - THE ZONE COMES BACK BY ITSELF, DO NOT REINSTALL. MAPS ON CLUSTER WILL SHOW CARPLAY AS \"UPDATE NEEDED\" - THAT IS NORMAL, DO NOT PRESS PATCH. Puts Yandex Navigator in the middle of the instrument cluster by moving the CarPlay map zone. Needs Maps on cluster 0.11.0 or newer. CarPlay on the system partition is not modified. The zone is one for every CarPlay navigation app: what suits Yandex may misplace Apple Maps or Waze. Removing the tool puts the default zone back. If the old cluster-yandex-safearea-fix is installed, remove it: it does not work with the new map versions.",
