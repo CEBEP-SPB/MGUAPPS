@@ -47,11 +47,14 @@ The zone is `WxH+X+Y` inside the 1088x480 frame. Car left of centre - make X big
 Since 0.5.0 the zone can be picked by the car body. The body is read from the head unit's own coding image (`/dev/shm/rawcodingdata`,
 CAFD HU_MGU 3002 `BAUREIHE`; read-only, checked against E-Sys on a G06, and read as G20 on a G20).
 
-No body has its own zone now. 0.5.0 shipped `504x368+388+72` for the 3 / 4 Series and `504x368+410+72`
-for the 8 Series; on a G20 in the workshop (2026-11-24) 388 put the car about 10 mm left of centre, while
-456 is within a couple of mm there and on a G02. Other cars of the same bodies show the car right of
-centre at 456, so the body is not what decides it. 0.5.1 puts every body back on `504x368+456+72`.
-The mechanism stays: a line `safe[G20 G21]=WxH+X+Y` in `zone.conf` gives those bodies their own zone.
+| Body | Zone | Why |
+|---|---|---|
+| G14, G15, G16, F93 (8 Series) | `504x368+410+72` | a G15 owner (iOS 27, current Navigator): centred with 410, about 6 mm right with 456 |
+| every other body | `504x368+456+72` | centred with one iPhone on a G02, a G20 and a G05 |
+
+The 3 / 4 Series has no line on purpose: 0.5.0 shipped 388 for it, and on a G20 in the workshop that put
+the car about 10 mm left of centre. The phone moves the car too (see the root README), so a body line is
+right only for the phones it was measured with. A line `safe[G20 G21]=WxH+X+Y` in `zone.conf` adds a body.
 
 Your own zone in `zone.local.conf` wins over the body. `zone.js status` prints the body it read.
 When the coding cannot be read at a start, the boot check leaves the plan as it is.
